@@ -59,7 +59,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         return []
 
-    def _run_tartex_process(self, file_obj: Nautilus.FileInfo):
+    def _run_tartex_process(self, file_obj: Nautilus.FileInfo, notif_id: int):
         """
         Runs the blocking tartex process in a separate thread.
         This function handles the synchronous part and sends the final
@@ -71,9 +71,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 subprocess.Popen(
                     [
                         "notify-send",
-                        "TarTeX Error",
-                        "tartex command not found in your system PATH.",
-                    ]
+                        "--app-name",
+                        "TarTeX",
+                        "--replace-id",
+                        f"{notif_id}",
+                        "Error: tartex command not found in PATH.",
+                    ],
                 )
                 return
 
@@ -108,17 +111,21 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     "notify-send",
                     "--app-name",
                     "TarTeX",
+                    "--replace-id",
+                    f"{notif_id}",
                     success_msg,
                 ]
             )
 
         except subprocess.CalledProcessError:
             # If the process failed (non-zero exit code), send a generic error.
-            subprocess.Popen(
+            subprocess.run(
                 [
                     "notify-send",
                     "--app-name",
                     "TarTeX",
+                    "--replace-id",
+                    f"{notif_id}",
                     "Error: tartex failed to create archive using"
                     f" {file_path}.",
                 ]
@@ -126,11 +133,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         except Exception:
             # Handle any other unexpected errors.
-            subprocess.Popen(
+            subprocess.run(
                 [
                     "notify-send",
                     "--app-name",
                     "TarTeX",
+                    "--replace-id",
+                    f"{notif_id}",
                     "Error: An unexpected error occurred.",
                 ]
             )
@@ -141,14 +150,18 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         It starts the tartex command in a new thread to keep the UI responsive.
         """
         # 1. Send an immediate notification that the work has started
-        subprocess.Popen(
+        notification = subprocess.run(
             [
                 "notify-send",
                 "--app-name",
                 "TarTeX",
                 "Archive creation started (running in background).",
-            ]
+                "--print-id",
+            ],
+            capture_output=True,
+            text=True,
         )
+        notif_id = int(notification.stdout)
 
         # 2. Start the blocking process in a new thread
         thread = threading.Thread(
