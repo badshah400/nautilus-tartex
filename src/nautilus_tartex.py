@@ -59,9 +59,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         return []
 
-    def _run_tartex_process(
-        self, file_path: str, output_name: str, use_git: bool = False
-    ):
+    def _run_tartex_process(self, file_obj: Nautilus.FileInfo):
         """
         Runs the blocking tartex process in a separate thread.
         This function handles the synchronous part and sends the final
@@ -78,6 +76,16 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     ]
                 )
                 return
+
+            file_path = file_obj.get_location().get_path()
+            file_name_stem = os.path.splitext(file_obj.get_name())[0]
+
+            use_git = (Path(file_path).parent / ".git").is_dir()
+
+            # Generate a unique filename with a timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_name = f"{file_name_stem}_{timestamp}.tar.gz"
+
 
             cmd = [tartex_path, file_path, "-b", "-s"]
             if use_git:
@@ -132,15 +140,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         This method is called when the user clicks the menu item.
         It starts the tartex command in a new thread to keep the UI responsive.
         """
-        file_path = file_obj.get_location().get_path()
-        file_name_stem = os.path.splitext(file_obj.get_name())[0]
-
-        use_git = (Path(file_path).parent / ".git").is_dir()
-
-        # Generate a unique filename with a timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_name = f"{file_name_stem}_{timestamp}.tar.gz"
-
         # 1. Send an immediate notification that the work has started
         subprocess.Popen(
             [
@@ -154,7 +153,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # 2. Start the blocking process in a new thread
         thread = threading.Thread(
             target=self._run_tartex_process,
-            args=(file_path, output_name, use_git)
+            args=(file_obj)
         )
         thread.daemon = True  # Ensures the thread exits if the main app is closed
         thread.start()
