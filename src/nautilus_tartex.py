@@ -166,7 +166,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # 2. Start the blocking process in a new thread
         thread = threading.Thread(
             target=self._run_tartex_process,
-            args=(file_obj)
+            args=(file_obj, notif_id),
+            daemon=True,  # Ensures the thread exits if the main app is closed
         )
-        thread.daemon = True  # Ensures the thread exits if the main app is closed
         thread.start()
