@@ -59,6 +59,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         return []
 
+    def get_background_items(
+          self,
+          current_folder: Nautilus.FileInfo,
+      ) -> list[Nautilus.MenuItem]:
+          return []
+
     def _run_tartex_process(self, file_obj: Nautilus.FileInfo, notif_id: int):
         """
         Runs the blocking tartex process in a separate thread.
