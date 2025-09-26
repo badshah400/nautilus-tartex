@@ -5,6 +5,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import Union
 import threading
 
 # Try to import the Nautilus and GObject libraries.
@@ -12,11 +13,10 @@ import threading
 # which is the desired behavior for non-GNOME environments.
 try:
     import gi  # type: ignore[import-untyped]
-
     gi.require_version("Gtk", "4.0")
-
     from gi.repository import (  # type: ignore[import-untyped]
         Nautilus,
+        GLib,
         GObject,
     )
 except ImportError:
@@ -68,15 +68,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         try:
             tartex_path = shutil.which("tartex")
             if not tartex_path:
-                subprocess.Popen(
-                    [
-                        "notify-send",
-                        "--app-name",
-                        "TarTeX",
-                        "--replace-id",
-                        f"{notif_id}",
-                        "Error: tartex command not found in PATH.",
-                    ],
+                GLib.idle_add(
+                    self._notify_send,
+                    "Error: tartex command not found in PATH.",
+                    notif_id,
                 )
                 return
 
@@ -104,45 +99,24 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             # Use final summary line upon success for notification
             success_msg = tartex_proc.stdout.splitlines()[-1]
             success_msg = success_msg.replace("Summary: ", "", count=1)
-
-            # If the process completes successfully
-            subprocess.Popen(
-                [
-                    "notify-send",
-                    "--app-name",
-                    "TarTeX",
-                    "--replace-id",
-                    f"{notif_id}",
-                    success_msg,
-                ]
-            )
+            GLib.idle_add(self._notify_send, success_msg, notif_id)
 
         except subprocess.CalledProcessError:
-            # If the process failed (non-zero exit code), send a generic error.
-            subprocess.run(
-                [
-                    "notify-send",
-                    "--app-name",
-                    "TarTeX",
-                    "--replace-id",
-                    f"{notif_id}",
-                    "Error: tartex failed to create archive using"
-                    f" {file_path}.",
-                ]
+            file_obj.get_parent_info().invalidate_extension_info()
+            GLib.idle_add(
+                self._notify_send,
+                f"Error: tartex failed to create archive using {file_path}",
+                notif_id
             )
 
         except Exception:
-            # Handle any other unexpected errors.
-            subprocess.run(
-                [
-                    "notify-send",
-                    "--app-name",
-                    "TarTeX",
-                    "--replace-id",
-                    f"{notif_id}",
-                    "Error: An unexpected error occurred.",
-                ]
+            file_obj.get_parent_info().invalidate_extension_info()
+            GLib.idle_add(
+                self._notify_send,
+                "Error: An unexpected error occurred",
+                notif_id
             )
+
 
     def on_tartex_activate(self, menu_item, file_obj):
         """
@@ -170,3 +144,18 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             daemon=True,  # Ensures the thread exits if the main app is closed
         )
         thread.start()
+        file_obj.invalidate_extension_info()
+
+    def _notify_send(self, msg: str, notif_id: Union[int, None] = None):
+        """Send notification at end of process one way or another
+
+        :msg: notification message
+        :notify_id: notification id to replace (optional)
+        :returns: TODO
+
+        """
+        cmdline = ["notify-send", msg, "--app-name", "TarTeX"]
+        if notif_id:
+            cmdline += ["--replace-id", f"{notif_id}"]
+        subprocess.run(cmdline)
+
