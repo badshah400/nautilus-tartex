@@ -148,7 +148,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             daemon=True,  # Ensures the thread exits if the main app is closed
         )
         thread.start()
-        file_obj.invalidate_extension_info()
+        GLib.idle_add(file_obj.invalidate_extension_info)
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another
