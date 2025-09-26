@@ -1,0 +1,5 @@
+# Cache for static checker
+.mypy_cache
+
+# ctags
+tags
