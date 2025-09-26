@@ -30,6 +30,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     """
 
     def __init__(self):
+        os.environ["TERM"] = "dumb"  # suppress rich formatting
         GObject.GObject.__init__(self)
 
     def get_file_items(self, items):
@@ -80,21 +81,27 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 )
                 return
 
-            cmd = [tartex_path, file_path, "-b"]
+            cmd = [tartex_path, file_path, "-b", "-s"]
             if use_git:
                 cmd += ["--overwrite", "--git-rev"]
             else:  # use unique time-stamped output tar name
                 cmd += ["--output", output_name]
 
             # This is the synchronous (blocking) part of the code
-            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            tartex_proc = subprocess.run(
+                cmd, capture_output=True, text=True, check=True
+            )
+
+            # Use final summary line upon success for notification
+            success_msg = tartex_proc.stdout.splitlines()[-1]
+            success_msg = success_msg.replace("Summary: ", "", count=1)
 
             # If the process completes successfully
             subprocess.Popen(
                 [
                     "notify-send",
                     "TarTeX",
-                    f"Archive created successfully as {output_name}.",
+                    success_msg,
                 ]
             )
 
