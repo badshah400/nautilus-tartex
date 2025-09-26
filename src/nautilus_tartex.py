@@ -54,9 +54,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 label="Create TarTeX Archive",
                 tip="Creates a compressed tarball of the project using tartex.",
             )
-            top_menu_item.connect(
-                "activate", self.on_tartex_activate, file_obj
-            )
+            top_menu_item.connect("activate", self.on_tartex_activate, file_obj)
             return [top_menu_item]
 
         return []
@@ -100,6 +98,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             subprocess.Popen(
                 [
                     "notify-send",
+                    "--app-name",
                     "TarTeX",
                     success_msg,
                 ]
@@ -110,15 +109,22 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             subprocess.Popen(
                 [
                     "notify-send",
-                    "TarTeX Error",
-                    f"tartex failed to create archive using {file_path}.",
+                    "--app-name",
+                    "TarTeX",
+                    "Error: tartex failed to create archive using"
+                    f" {file_path}.",
                 ]
             )
 
         except Exception:
             # Handle any other unexpected errors.
             subprocess.Popen(
-                ["notify-send", "tartex Error", "An unexpected error occurred."]
+                [
+                    "notify-send",
+                    "--app-name",
+                    "TarTeX",
+                    "Error: An unexpected error occurred.",
+                ]
             )
 
     def on_tartex_activate(self, menu_item, file_obj):
@@ -139,14 +145,16 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         subprocess.Popen(
             [
                 "notify-send",
-                "TarTeX Status",
+                "--app-name",
+                "TarTeX",
                 "Archive creation started (running in background).",
             ]
         )
 
         # 2. Start the blocking process in a new thread
         thread = threading.Thread(
-            target=self._run_tartex_process, args=(file_path, output_name, use_git)
+            target=self._run_tartex_process,
+            args=(file_path, output_name, use_git)
         )
         thread.daemon = True  # Ensures the thread exits if the main app is closed
         thread.start()
