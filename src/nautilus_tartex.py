@@ -78,14 +78,14 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         This function handles the synchronous part and sends the final
         notification.
         """
+        parent_dir = file_obj.get_parent_location().get_path()
         try:
             tartex_path = shutil.which("tartex")
             if not tartex_path:
                 GLib.idle_add(
                     self._notify_send,
                     "Error",
-                    "\N{Police Cars Revolving Light} "
-                    "tartex command not found in PATH.",
+                    "🚨 tartex command not found in PATH",
                     n
                 )
                 return
@@ -111,6 +111,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 cmd, capture_output=True, text=True, check=True
             )
 
+            self._trigger_directory_refresh(parent_dir)
+
             # Use final summary line upon success for notification
             success_msg = tartex_proc.stdout.splitlines()[-1]
             success_msg = success_msg.replace("Summary: ", "", count=1)
@@ -118,6 +120,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         except subprocess.CalledProcessError as e:
             # On error, format the full output and show the detailed dialog
+            self._trigger_directory_refresh(parent_dir)
             full_error_output = f"Output:\n{e.stdout}\n"
             if e.stderr:
                 full_error_output += f'\nError log:\n{e.stderr}\n'
@@ -135,6 +138,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             )
 
         except Exception:
+            self._trigger_directory_refresh(parent_dir)
             GLib.idle_add(
                 self._notify_send,
                 "Error",
@@ -150,7 +154,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # 1. Send an immediate notification that the work has started
         notif = Notify.Notification.new(
             "TarTeX",
-            "⏳ Archive creation started (running in background).",
+            "⏳ Archive creation started (running in background)",
         )
         notif.show()
 
@@ -162,13 +166,36 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         thread.start()
         GLib.idle_add(file_obj.invalidate_extension_info)
-        thread.join()
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another"""
         n.update(head, msg)
         n.show()
         return False
+
+    def _trigger_directory_refresh(self, dir_path: str):
+        """
+        Uses GIO to inform the file system monitors that a directory's contents
+        may have changed, which forces the Nautilus view to refresh.
+        """
+        if not dir_path:
+            return
+
+        try:
+            # 1. Create a Gio.File object for the directory
+            dir_file = Gio.File.new_for_path(dir_path)
+
+            # 2. Use the non-blocking query_info_async to hint to the GIO
+            # file monitor that it needs to check for updates.
+            dir_file.query_info_async(
+                "standard::name",  # Query a standard attribute to trigger the check
+                Gio.FileQueryInfoFlags.NONE,
+                GLib.PRIORITY_DEFAULT,
+                None,  # Cancellable
+                lambda source, res: None # A no-op callback is needed
+            )
+        except Exception as e:
+            print(f"TarTeX Nautilus: Failed to trigger GIO directory refresh for {dir_path}: {e}")
 
     def _show_error_dialog(self, dir_path, error_details, exit_code):
         """
