@@ -177,6 +177,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         """
         # Get the active application instance if possible
         application = Gtk.Application.get_default()
+        parent_window = None
+        if application:
+            # Attempt to get the active window (likely the Nautilus window)
+            parent_window = application.get_active_window()
 
         # 1. Create a modal dialog
         dialog = Gtk.Dialog(
@@ -185,6 +189,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             default_width=600,
             default_height=400,
             application=application, # Attach to the main application if available
+            transient_for=parent_window,
         )
 
         # 2. Add the 'Close' button to the action area (standard GTK Dialog footer)
@@ -247,4 +252,3 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         dialog.present()
         return False # Required for GLib.idle_add
-
