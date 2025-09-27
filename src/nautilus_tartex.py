@@ -19,6 +19,8 @@ try:
         Notify,
         GLib,
         GObject,
+        Gio,
+        Gtk,
     )
 except ImportError:
     pass
@@ -113,7 +115,21 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             success_msg = success_msg.replace("Summary: ", "", count=1)
             GLib.idle_add(self._notify_send, "Success", success_msg, n)
 
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
+            # On error, format the full output and show the detailed dialog
+            full_error_output = (
+                f"<span weight=\"bold\">Output</span>:\n{e.stdout}\n"
+            )
+            if e.stderr:
+                full_error_output += (
+                    f'\n<span weight="bold">Error log</span>:\n{e.stderr}\n'
+                )
+            GLib.idle_add(
+                self._show_error_dialog,
+                file_obj,
+                full_error_output,
+                e.returncode
+            )
             GLib.idle_add(
                 self._notify_send,
                 "Error",
@@ -137,7 +153,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # 1. Send an immediate notification that the work has started
         notif = Notify.Notification.new(
             "TarTeX",
-            "Archive creation started (running in background).",
+            "⏳ Archive creation started (running in background).",
         )
         notif.show()
 
@@ -151,8 +167,85 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         GLib.idle_add(file_obj.invalidate_extension_info)
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
-        """Send notification at end of process one way or another
-
-        """
+        """Send notification at end of process one way or another"""
         n.update(head, msg)
         n.show()
+
+    def _show_error_dialog(self, dir_path, error_details, exit_code):
+        """
+        Shows a modal dialog with full error details, using a modern GTK4 layout.
+        Must be called via GLib.idle_add.
+        """
+        # Get the active application instance if possible
+        application = Gtk.Application.get_default()
+
+        # 1. Create a modal dialog
+        dialog = Gtk.Dialog(
+            title="TarTeX Archive Generation Failed",
+            modal=True,
+            default_width=600,
+            default_height=400,
+            application=application, # Attach to the main application if available
+        )
+
+        # 2. Add the 'Close' button to the action area (standard GTK Dialog footer)
+        dialog.add_button("Close", Gtk.ResponseType.CLOSE)
+
+        # Connect response signal to close the dialog
+        dialog.connect("response", lambda d, r: d.close())
+
+        # 3. Set up the content area box
+        content_area = dialog.get_content_area()
+        content_area.set_orientation(Gtk.Orientation.VERTICAL)
+        content_area.set_spacing(12)
+        content_area.set_margin_top(18)
+        content_area.set_margin_bottom(6)
+        content_area.set_margin_start(18)
+        content_area.set_margin_end(18)
+
+        # 4. Header Message with Icon
+        header_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+
+        # Using a standard GNOME error icon
+        error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+        error_icon.set_icon_size(Gtk.IconSize.LARGE)
+        error_icon.set_valign(Gtk.Align.START)
+        header_hbox.append(error_icon)
+
+        # Header text
+        header_label = Gtk.Label(
+            label=f"<b>TarTeX failed with exit code {exit_code}.</b>\n\n",
+            use_markup=True,
+            xalign=0,
+            halign=Gtk.Align.START,
+            wrap=True
+        )
+        header_hbox.append(header_label)
+        content_area.append(header_hbox)
+
+        # 5. Add the scrollable text area for details
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_vexpand(True)
+        scrolled_window.set_hexpand(True)
+        scrolled_window.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        )
+        scrolled_window.set_margin_top(6)
+        scrolled_window.get_style_context().add_class("dialog-output-frame")
+
+
+        # Use Gtk.TextView inside Gtk.ScrolledWindow for proper selection and scrolling of large output
+        text_view = Gtk.TextView()
+        text_view.set_editable(False)
+        text_view.set_cursor_visible(False)
+        text_view.set_wrap_mode(Gtk.WrapMode.WORD)
+
+        text_buffer = text_view.get_buffer()
+        text_buffer.set_text(error_details)
+
+        scrolled_window.set_child(text_view)
+        content_area.append(scrolled_window)
+
+        dialog.present()
+        return False # Required for GLib.idle_add
+
