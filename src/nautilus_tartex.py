@@ -118,13 +118,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         except subprocess.CalledProcessError as e:
             # On error, format the full output and show the detailed dialog
-            full_error_output = (
-                f"<span weight=\"bold\">Output</span>:\n{e.stdout}\n"
-            )
+            full_error_output = f"Output:\n{e.stdout}\n"
             if e.stderr:
-                full_error_output += (
-                    f'\n<span weight="bold">Error log</span>:\n{e.stderr}\n'
-                )
+                full_error_output += f'\nError log:\n{e.stderr}\n'
             GLib.idle_add(
                 self._show_error_dialog,
                 file_obj,
