@@ -84,6 +84,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 GLib.idle_add(
                     self._notify_send,
                     "Error",
+                    "\N{Police Cars Revolving Light} "
                     "tartex command not found in PATH.",
                     n
                 )
@@ -133,7 +134,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.idle_add(
                 self._notify_send,
                 "Error",
-                f"tartex failed to create archive using {file_path}",
+                f"🚨 tartex failed to create archive using {file_path}",
                 n,
             )
 
@@ -141,7 +142,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.idle_add(
                 self._notify_send,
                 "Error",
-                " An unexpected error occurred",
+                "🚫 An unexpected error occurred",
                 n
             )
 
