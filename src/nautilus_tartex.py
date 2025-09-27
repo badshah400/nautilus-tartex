@@ -101,7 +101,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
             cmd = [tartex_path, file_path, "-b", "-s"]
             if use_git:
-                cmd += ["--overwrite", "--git-rev"]
+                cmd += ["--overwrite", "--git-rev", "--output", parent_dir]
             else:  # use unique time-stamped output tar name
                 cmd += ["--output", output_name]
 
