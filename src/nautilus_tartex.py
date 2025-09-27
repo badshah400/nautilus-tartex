@@ -93,12 +93,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             file_path = file_obj.get_location().get_path()
             file_name_stem = os.path.splitext(file_obj.get_name())[0]
 
-            use_git = (Path(file_path).parent / ".git").is_dir()
+            use_git = (Path(parent_dir) / ".git").is_dir()
 
             # Generate a unique filename with a timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             output_name = f"{file_name_stem}_{timestamp}.tar.gz"
-
 
             cmd = [tartex_path, file_path, "-b", "-s"]
             if use_git:
