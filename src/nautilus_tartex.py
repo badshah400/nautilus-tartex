@@ -166,11 +166,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         thread.start()
         GLib.idle_add(file_obj.invalidate_extension_info)
+        thread.join()
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another"""
         n.update(head, msg)
         n.show()
+        return False
 
     def _show_error_dialog(self, dir_path, error_details, exit_code):
         """
