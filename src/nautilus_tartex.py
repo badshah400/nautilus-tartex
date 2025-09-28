@@ -158,7 +158,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         except ValueError:
             file_rel_str = file_path
         if exit_code:
-            self._notify_send(
+            GLib.timeout_add(
+                0,
+                self._notify_send,
                 "TarTeX Error",
                 f"🚨 Failed to create archive using {file_rel_str}",
                 notif,
@@ -166,11 +168,19 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             full_error_output = f"Output:\n{stdout}\n"
             if stderr:
                 full_error_output += f"\nError log:\n{stderr}\n"
-            self._show_error_dialog(file_obj, full_error_output, exit_code)
+            GLib.timeout_add(
+                0,
+                self._show_error_dialog,
+                file_obj,
+                full_error_output,
+                exit_code
+            )
         else:
             success_msg = stdout.splitlines()[-1]
             success_msg = success_msg.replace("Summary: ", "", count=1)
-            self._notify_send("TarTeX Success", success_msg, notif)
+            GLib.timeout_add(
+                0, self._notify_send, "TarTeX Success", success_msg, notif
+            )
 
     def on_tartex_activate(self, menu_item, file_obj):
         """
@@ -272,4 +282,4 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         content_area.append(scrolled_window)
 
         dialog.present()
-        return
+        return False
