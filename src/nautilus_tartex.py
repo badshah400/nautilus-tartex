@@ -13,6 +13,7 @@ import threading
 try:
     import gi  # type: ignore[import-untyped]
     gi.require_version("Gtk", "4.0")
+    gi.require_version("Nautilus", "4.1")
     gi.require_version("Notify", "0.7")
     from gi.repository import (  # type: ignore[import-untyped]
         Nautilus,
