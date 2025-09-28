@@ -1,11 +1,9 @@
 # vim: set ai et ts=4 sw=4 tw=80:
 
-import subprocess
 import os
 import shutil
 from datetime import datetime
 from pathlib import Path
-import threading
 
 # Try to import the Nautilus and GObject libraries.
 # If this fails, the script will not be loaded by Nautilus,
@@ -13,6 +11,7 @@ import threading
 try:
     import gi  # type: ignore[import-untyped]
     gi.require_version("Gtk", "4.0")
+    gi.require_version("Nautilus", "4.1")
     gi.require_version("Notify", "0.7")
     from gi.repository import (  # type: ignore[import-untyped]
         Nautilus,
@@ -79,70 +78,82 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         notification.
         """
         parent_dir = file_obj.get_parent_location()
-        try:
-            tartex_path = shutil.which("tartex")
-            if not tartex_path:
-                GLib.idle_add(
-                    self._notify_send,
-                    "Error",
-                    "🚨 tartex command not found in PATH",
-                    n
-                )
-                return
-
-            file_path = file_obj.get_location().get_path()
-            file_name_stem = os.path.splitext(file_obj.get_name())[0]
-
-            use_git = (Path(parent_dir.get_path()) / ".git").is_dir()
-
-            # Generate a unique filename with a timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_name = f"{file_name_stem}_{timestamp}.tar.gz"
-
-            cmd = [tartex_path, file_path, "-b", "-s"]
-            if use_git:
-                cmd += ["--overwrite", "--git-rev", "--output", parent_dir]
-            else:  # use unique time-stamped output tar name
-                cmd += ["--output", output_name]
-
-            # This is the synchronous (blocking) part of the code
-            tartex_proc = subprocess.run(
-                cmd, capture_output=True, text=True, check=True
-            )
-
-            GLib.idle_add(self._trigger_directory_refresh, parent_dir)
-
-            # Use final summary line upon success for notification
-            success_msg = tartex_proc.stdout.splitlines()[-1]
-            success_msg = success_msg.replace("Summary: ", "", count=1)
-            GLib.idle_add(self._notify_send, "Success", success_msg, n)
-
-        except subprocess.CalledProcessError as e:
-            # On error, format the full output and show the detailed dialog
-            # GLib.idle_add(self._trigger_directory_refresh, parent_dir)
-            full_error_output = f"Output:\n{e.stdout}\n"
-            if e.stderr:
-                full_error_output += f'\nError log:\n{e.stderr}\n'
+        tartex_path = shutil.which("tartex")
+        if not tartex_path:
             GLib.idle_add(
-                self._show_error_dialog,
+                self._notify_send,
+                "Error",
+                "🚨 tartex command not found in PATH",
+                n
+            )
+            return
+
+        file_path = file_obj.get_location().get_path()
+        file_name_stem = os.path.splitext(file_obj.get_name())[0]
+
+        use_git = (Path(parent_dir.get_path()) / ".git").is_dir()
+
+        # Generate a unique filename with a timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_name = (
+            f"{parent_dir.get_path()}{os.sep}"
+            f"{file_name_stem}_{timestamp}.tar.gz"
+        )
+
+        cmd = [tartex_path, file_path, "-b", "-s"]
+        if use_git:
+            cmd += [
+                "--overwrite",
+                "--git-rev",
+                "--output",
+                parent_dir.get_path()  # specify dir but allow default git tag
+            ]
+        else:  # use unique time-stamped output tar name
+            cmd += ["--output", output_name]
+
+        # This is the synchronous (blocking) part of the code
+        tartex_proc = Gio.SubprocessLauncher.new(
+            Gio.SubprocessFlags.STDOUT_PIPE |
+            Gio.SubprocessFlags.STDERR_PIPE
+        )
+        process = tartex_proc.spawnv(cmd)
+        process.communicate_utf8_async(
+            None,  # No stdin
+            None,  # Cancellable (None)
+            self._on_tartex_complete,  # Gio.AsyncReadyCallback function
+            (file_obj, n) # data to pass to the callback
+        )
+
+    def _on_tartex_complete(
+            self, proc: Gio.Subprocess, res: Gio.AsyncResult, params: tuple
+    ):
+        """Callback func to run upon tartex completion"""
+
+        file_obj, notif = params
+        success, stdout, stderr = proc.communicate_utf8_finish(res)
+        exit_code = proc.get_exit_status()
+
+        if exit_code:
+            self._notify_send(
+                "Error",
+                "🚨 tartex failed to create archive",
+                notif,
+            )
+            full_error_output = f"Output:\n{stdout}\n"
+            if stderr:
+                full_error_output += f'\nError log:\n{stderr}\n'
+            self._show_error_dialog(
                 file_obj,
                 full_error_output,
-                e.returncode
+                exit_code
             )
-            GLib.idle_add(
-                self._notify_send,
-                "Error",
-                f"🚨 tartex failed to create archive using {file_path}",
-                n,
-            )
-
-        except Exception:
-            GLib.idle_add(self._trigger_directory_refresh, parent_dir)
-            GLib.idle_add(
-                self._notify_send,
-                "Error",
-                "🚫 An unexpected error occurred",
-                n
+        else:
+            success_msg = stdout.splitlines()[-1]
+            success_msg = success_msg.replace("Summary: ", "", count=1)
+            self._notify_send(
+                "Success",
+                success_msg,
+                notif,
             )
 
     def on_tartex_activate(self, menu_item, file_obj):
@@ -157,13 +168,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         notif.show()
 
-        # 2. Start the blocking process in a new thread
-        thread = threading.Thread(
-            target=self._run_tartex_process,
-            args=(file_obj, notif),
-            daemon=True,  # Ensures the thread exits if the main app is closed
-        )
-        thread.start()
+        self._run_tartex_process(file_obj, notif)
         GLib.idle_add(file_obj.invalidate_extension_info)
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
