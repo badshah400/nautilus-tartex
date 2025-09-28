@@ -108,7 +108,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         else:  # use unique time-stamped output tar name
             cmd += ["--output", output_name]
 
-        # This is the synchronous (blocking) part of the code
         tartex_proc = Gio.SubprocessLauncher.new(
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
         )
@@ -162,38 +161,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             "⏳ Archive creation started (running in background)",
         )
         notif.show()
-
         self._run_tartex_process(file_obj, notif)
-        file_obj.invalidate_extension_info()
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another"""
         n.update(head, msg)
         n.show()
         return False
-
-    def _trigger_directory_refresh(self, dir_file: Gio.File):
-        """
-        Uses GIO to inform the file system monitors that a directory's contents
-        may have changed, which forces the Nautilus view to refresh.
-        """
-        if not dir_file:
-            return
-
-        try:
-            # Use the non-blocking query_info_async to hint to the GIO
-            # file monitor that it needs to check for updates.
-            _dir_info = dir_file.query_info(
-                "standard::name",  # Query a standard attribute to trigger the check
-                Gio.FileQueryInfoFlags.NONE,
-                None,  # Cancellable
-            )
-            _dir_info.set_modification_date_time(GLib.DateTime.new_now_utc())
-
-        except Exception as e:
-            print(
-                f"TarTeX Nautilus: Failed to trigger GIO directory refresh for {dir_file}: {e}"
-            )
 
     def _show_error_dialog(self, dir_path, error_details, exit_code):
         """
