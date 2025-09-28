@@ -10,6 +10,7 @@ from pathlib import Path
 # which is the desired behavior for non-GNOME environments.
 try:
     import gi  # type: ignore[import-untyped]
+
     gi.require_version("Gtk", "4.0")
     gi.require_version("Nautilus", "4.1")
     gi.require_version("Notify", "0.7")
@@ -58,19 +59,21 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 label="Create TarTeX Archive",
                 tip="Creates a compressed tarball of the project using tartex.",
             )
-            top_menu_item.connect("activate", self.on_tartex_activate, file_obj)
+            top_menu_item.connect(
+                "activate", self.on_tartex_activate, file_obj
+            )
             return [top_menu_item]
 
         return []
 
     def get_background_items(
-          self,
-          current_folder: Nautilus.FileInfo,
-      ) -> list[Nautilus.MenuItem]:
-          return []
+        self,
+        current_folder: Nautilus.FileInfo,
+    ) -> list[Nautilus.MenuItem]:
+        return []
 
     def _run_tartex_process(
-        self,file_obj: Nautilus.FileInfo, n: Notify.Notification
+        self, file_obj: Nautilus.FileInfo, n: Notify.Notification
     ):
         """
         Runs the blocking tartex process in a separate thread.
@@ -81,9 +84,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         tartex_path = shutil.which("tartex")
         if not tartex_path:
             self._notify_send(
-                "Error",
-                "🚨 tartex command not found in PATH",
-                n
+                "Error", "🚨 tartex command not found in PATH", n
             )
             return
 
@@ -94,10 +95,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         # Generate a unique filename with a timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_name = (
-            f"{parent_dir.get_path()}{os.sep}"
-            f"{file_name_stem}_{timestamp}.tar.gz"
-        )
+        output_name = f"{parent_dir.get_path()}{os.sep}{file_name_stem}_{timestamp}.tar.gz"
 
         cmd = [tartex_path, file_path, "-b", "-s"]
         if use_git:
@@ -105,26 +103,25 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 "--overwrite",
                 "--git-rev",
                 "--output",
-                parent_dir.get_path()  # specify dir but allow default git tag
+                parent_dir.get_path(),  # specify dir but allow default git tag
             ]
         else:  # use unique time-stamped output tar name
             cmd += ["--output", output_name]
 
         # This is the synchronous (blocking) part of the code
         tartex_proc = Gio.SubprocessLauncher.new(
-            Gio.SubprocessFlags.STDOUT_PIPE |
-            Gio.SubprocessFlags.STDERR_PIPE
+            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
         )
         process = tartex_proc.spawnv(cmd)
         process.communicate_utf8_async(
             None,  # No stdin
             None,  # Cancellable (None)
             self._on_tartex_complete,  # Gio.AsyncReadyCallback function
-            (file_obj, n) # data to pass to the callback
+            (file_obj, n),  # data to pass to the callback
         )
 
     def _on_tartex_complete(
-            self, proc: Gio.Subprocess, res: Gio.AsyncResult, params: tuple
+        self, proc: Gio.Subprocess, res: Gio.AsyncResult, params: tuple
     ):
         """Callback func to run upon tartex completion"""
 
@@ -134,9 +131,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         file_path = file_obj.get_location().get_path()
         try:
-            file_path_rel_home = Path(file_obj.get_location().get_path()).relative_to(
-                Path.home()
-            )
+            file_path_rel_home = Path(
+                file_obj.get_location().get_path()
+            ).relative_to(Path.home())
             file_rel_str = f"~{os.sep}{file_path_rel_home!s}"
         except ValueError:
             file_rel_str = file_path
@@ -148,12 +145,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             )
             full_error_output = f"Output:\n{stdout}\n"
             if stderr:
-                full_error_output += f'\nError log:\n{stderr}\n'
-            self._show_error_dialog(
-                file_obj,
-                full_error_output,
-                exit_code
-            )
+                full_error_output += f"\nError log:\n{stderr}\n"
+            self._show_error_dialog(file_obj, full_error_output, exit_code)
         else:
             success_msg = stdout.splitlines()[-1]
             success_msg = success_msg.replace("Summary: ", "", count=1)
@@ -198,7 +191,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             _dir_info.set_modification_date_time(GLib.DateTime.new_now_utc())
 
         except Exception as e:
-            print(f"TarTeX Nautilus: Failed to trigger GIO directory refresh for {dir_file}: {e}")
+            print(
+                f"TarTeX Nautilus: Failed to trigger GIO directory refresh for {dir_file}: {e}"
+            )
 
     def _show_error_dialog(self, dir_path, error_details, exit_code):
         """
@@ -217,7 +212,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             modal=True,
             default_width=600,
             default_height=400,
-            application=application, # Attach to the main application if available
+            application=application,  # Attach to the main application if available
             transient_for=parent_window,
         )
 
@@ -237,7 +232,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         content_area.set_margin_end(18)
 
         # 4. Header Message with Icon
-        header_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        header_hbox = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=12
+        )
 
         # Using a standard GNOME error icon
         error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
@@ -251,7 +248,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             use_markup=True,
             xalign=0,
             halign=Gtk.Align.START,
-            wrap=True
+            wrap=True,
         )
         header_hbox.append(header_label)
         content_area.append(header_hbox)
@@ -265,7 +262,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         scrolled_window.set_margin_top(6)
         scrolled_window.get_style_context().add_class("dialog-output-frame")
-
 
         # Use Gtk.TextView inside Gtk.ScrolledWindow for proper selection and scrolling of large output
         text_view = Gtk.TextView()
