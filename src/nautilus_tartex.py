@@ -80,8 +80,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         parent_dir = file_obj.get_parent_location()
         tartex_path = shutil.which("tartex")
         if not tartex_path:
-            GLib.idle_add(
-                self._notify_send,
+            self._notify_send(
                 "Error",
                 "🚨 tartex command not found in PATH",
                 n
