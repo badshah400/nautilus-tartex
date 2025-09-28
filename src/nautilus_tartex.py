@@ -168,7 +168,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         notif.show()
 
         self._run_tartex_process(file_obj, notif)
-        GLib.idle_add(file_obj.invalidate_extension_info)
+        file_obj.invalidate_extension_info()
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another"""
@@ -199,8 +199,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
     def _show_error_dialog(self, dir_path, error_details, exit_code):
         """
-        Shows a modal dialog with full error details, using a modern GTK4 layout.
-        Must be called via GLib.idle_add.
+        Shows a modal dialog with full error details, using a GTK4 layout.
         """
         # Get the active application instance if possible
         application = Gtk.Application.get_default()
@@ -278,4 +277,4 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         content_area.append(scrolled_window)
 
         dialog.present()
-        return False # Required for GLib.idle_add
+        return
