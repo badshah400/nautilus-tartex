@@ -111,16 +111,34 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         else:  # use unique time-stamped output tar name
             cmd += ["--output", output_name]
 
-        tartex_proc = Gio.SubprocessLauncher.new(
-            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
-        )
-        process = tartex_proc.spawnv(cmd)
-        process.communicate_utf8_async(
-            None,  # No stdin
-            None,  # Cancellable (None)
-            self._on_tartex_complete,  # Gio.AsyncReadyCallback function
-            (file_obj, n),  # data to pass to the callback
-        )
+        try:
+            tartex_proc = Gio.SubprocessLauncher.new(
+                Gio.SubprocessFlags.STDOUT_PIPE |
+                Gio.SubprocessFlags.STDERR_PIPE
+            )
+            process = tartex_proc.spawnv(cmd)
+            process.communicate_utf8_async(
+                None,  # No stdin
+                None,  # Cancellable (None)
+                self._on_tartex_complete,  # Gio.AsyncReadyCallback function
+                (file_obj, n),  # data to pass to the callback
+            )
+
+        except GLib.Error as err:
+            GLib.timeout_add(
+                0,
+                self._notify_send,
+                "TarTeX Error",
+                f"🚨 Failed to launch command: {err}"
+            )
+
+        except Exception as e:
+            GLib.timeout_add(
+                0,
+                self._notify_send,
+                "TarTeX Error",
+                f"🚫 An unknown error occurred: {e}"
+            )
 
     def _on_tartex_complete(
         self, proc: Gio.Subprocess, res: Gio.AsyncResult, params: tuple
