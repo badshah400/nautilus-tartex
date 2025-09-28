@@ -94,8 +94,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         use_git = (Path(parent_dir.get_path()) / ".git").is_dir()
 
         # Generate a unique filename with a timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_name = f"{parent_dir.get_path()}{os.sep}{file_name_stem}_{timestamp}.tar.gz"
+        timestamp = datetime.now().strftime(r"%Y%m%d_%H%M%S")
+        output_name = (
+            f"{parent_dir.get_path()}{os.sep}"
+            f"{file_name_stem}_{timestamp}.tar.gz"
+        )
 
         cmd = [tartex_path, file_path, "-b", "-s"]
         if use_git:
@@ -237,7 +240,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_window.set_margin_top(6)
         scrolled_window.get_style_context().add_class("dialog-output-frame")
 
-        # Use Gtk.TextView inside Gtk.ScrolledWindow for proper selection and scrolling of large output
+        # Use Gtk.TextView inside Gtk.ScrolledWindow for proper selection and
+        # scrolling of large output
         text_view = Gtk.TextView()
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
