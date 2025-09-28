@@ -132,10 +132,18 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         success, stdout, stderr = proc.communicate_utf8_finish(res)
         exit_code = proc.get_exit_status()
 
+        file_path = file_obj.get_location().get_path()
+        try:
+            file_path_rel_home = Path(file_obj.get_location().get_path()).relative_to(
+                Path.home()
+            )
+            file_rel_str = f"~{os.sep}{file_path_rel_home!s}"
+        except ValueError:
+            file_rel_str = file_path
         if exit_code:
             self._notify_send(
-                "Error",
-                "🚨 tartex failed to create archive",
+                "TarTeX Error",
+                f"🚨 Failed to create archive using {file_rel_str}",
                 notif,
             )
             full_error_output = f"Output:\n{stdout}\n"
@@ -149,18 +157,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         else:
             success_msg = stdout.splitlines()[-1]
             success_msg = success_msg.replace("Summary: ", "", count=1)
-            self._notify_send(
-                "Success",
-                success_msg,
-                notif,
-            )
+            self._notify_send("TarTeX Success", success_msg, notif)
 
     def on_tartex_activate(self, menu_item, file_obj):
         """
-        This method is called when the user clicks the menu item.
-        It starts the tartex command in a new thread to keep the UI responsive.
+        Method is called when the user clicks the menu item. Sends a
+        notification and call the function to run tartex
         """
-        # 1. Send an immediate notification that the work has started
         notif = Notify.Notification.new(
             "TarTeX",
             "⏳ Archive creation started (running in background)",
