@@ -151,9 +151,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         file_path = file_obj.get_location().get_path()
         try:
-            file_path_rel_home = Path(
-                file_obj.get_location().get_path()
-            ).relative_to(Path.home())
+            file_path_rel_home = Path(file_path).relative_to(Path.home())
             file_rel_str = f"~{os.sep}{file_path_rel_home!s}"
         except ValueError:
             file_rel_str = file_path
