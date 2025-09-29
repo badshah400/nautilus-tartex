@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# vim: set ai et ts=4 sw=4 tw=80:
+
+from packaging.version import Version, parse
+import fileinput
+import re
+import sys
+from pathlib import Path
+
+MESON = Path(".") / "meson.build"
+SRC = Path('.') / 'src' / 'nautilus_tartex.py'
+
+def print_usage():
+    """TODO: Docstring for print_usage.
+    :returns: TODO
+
+    """
+    print("Usage")
+    print(f"./{__name__} [version]")
+
+def curr_version() -> Version:
+    """
+    Return the current version as determined from the `__version__` string in
+    `./src/nautilus_tartex.py`
+    """
+    ver: Version = parse("0.0.0")
+    try:
+        with open(SRC, mode='r') as f:
+            for line in f.readlines():
+                mat = re.search("__version__.*", line)
+                if mat:
+                    ver_str = mat.group(0).split()[-1].strip('""')
+                    ver = parse(ver_str)
+                    break
+            else:
+                print(f"Error: unable to determine version from {SRC}")
+                return ver
+    except Exception as err:
+        raise err
+    finally:
+        return ver
+
+def set_version(ver: str):
+    try:
+        new_ver: Version = parse(ver)
+        for line in fileinput.input(SRC, mode='r', inplace=True, backup=".bak"):
+            new_line, _ = re.subn(
+                r"(__version__\s*=\s*).+$", rf'\1"{new_ver!s}"', line
+            )
+            print(new_line, end='')
+
+        fileinput.close()
+
+        for line in fileinput.input(
+                MESON, mode='r', inplace=True, backup=".bak"
+        ):
+            new_line, _ = re.subn(
+                r"^(\s*version\s*:\s*).+,$", rf"\1'{new_ver!s}',", line
+            )
+            print(new_line, end='')
+
+        fileinput.close()
+
+    except Exception as err:
+        raise err
+
+if __name__ == "__main__":
+    if len(sys.argv) > 2:
+        print_usage()
+    if len(sys.argv) == 2:
+        try:
+            set_version(sys.argv[1])
+        except Exception as e:
+            print(f"Error: Failed to set version: {e}")
+    if len(sys.argv) == 1:
+        print(curr_version())
