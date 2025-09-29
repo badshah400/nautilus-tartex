@@ -5,6 +5,19 @@ project('nautilus-tartex',
 
 files_app = 'nautilus'
 
+python = import('python')
+python.find_installation('python3',
+  modules: [
+        'gi',
+        'gi.repository.GLib',
+        'gi.repository.GObject',
+        'gi.repository.Gio',
+        'gi.repository.Gtk',
+        'gi.repository.Nautilus',
+        'gi.repository.Notify',
+  ],
+)
+
 user_install = get_option('user')
 if user_install
   fs = import('fs')
