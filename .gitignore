@@ -3,3 +3,7 @@
 
 # ctags
 tags
+
+# backup files
+*.bak
+*~
