@@ -1,0 +1,2 @@
+option('user', type: 'boolean', value: false, 
+       description: 'Whether to install to (non-privileged) user dir [boolean, default: false]')
