@@ -32,15 +32,16 @@ because, before installing, it checks whether all requirements are satisfied.
 
 However, if you are sure of all pre-requisites being installed in your system,
 you may simply copy over the
-[`src/nautilus_tartex.py`](./blob/main/src/nautilus_tartex.py) file into your
+[`src/nautilus_tartex.py`](./src/nautilus_tartex.py) file into your
 `nautilus-python` extensions directory, typically at
 `$XDG_DATA_HOME/nautilus-python/extensions/`.
 
 #### Meson based installation ####
 
-Download and extract a [release](./releases) tarball. `cd` into the extracted directory and
-use `meson` to configure and install the extension using _one_ of the following
-modes (from a console):
+Download and extract a
+[release](https://github.com/badshah400/nautilus-tartex/releases) tarball. `cd`
+into the extracted directory and use `meson` to configure and install the
+extension using _one_ of the following modes (from a console):
 
 1. As a regular, non-privileged user:
    ```console
@@ -62,4 +63,4 @@ Quit open nautilus windows (`nautilus -q`) and re-launch nautilus to see
 © 2025 Atri Bhattacharya
 
 `nautilus-tartex` is distributed under the terms of MIT License. See the
-[LICENSE](./blob/main/LICENSE.txt) file for details.
+[LICENSE](./LICENSE.txt) file for details.
