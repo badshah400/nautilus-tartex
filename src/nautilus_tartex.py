@@ -1,4 +1,7 @@
 # vim: set ai et ts=4 sw=4 tw=80:
+# 
+# Copyright 2025 Atri Bhattacharya <badshah400@opensuse.org>
+# Licensed under the terms of MIT License. See LICENSE.txt for details.
 
 import os
 import shutil
