@@ -18,6 +18,8 @@ python.find_installation('python3',
   ],
 )
 
+find_program('tartex', required: true, version: '0.10.3')
+
 user_install = get_option('user')
 if user_install
   fs = import('fs')
@@ -25,6 +27,7 @@ if user_install
 else
   prefix = get_option('prefix')
 endif
+
 datadir = get_option('datadir')
 extension_dir = prefix / datadir / files_app + '-python' / 'extensions'
 
