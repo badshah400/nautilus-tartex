@@ -15,8 +15,7 @@ def print_usage():
     :returns: TODO
 
     """
-    print("Usage")
-    print(f"./{__name__} [version]")
+    print(f"Usage: {sys.argv[0]} [version]")
 
 def curr_version() -> Version:
     """
