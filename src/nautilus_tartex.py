@@ -191,12 +191,15 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             "TarTeX",
             "⏳ Archive creation started (running in background)",
         )
+        notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
         notif.show()
         self._run_tartex_process(file_obj, notif)
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another"""
         n.update(head, msg)
+        n.set_urgency(Notify.Urgency.NORMAL)  # remove persistence
+        n.set_timeout(Notify.EXPIRES_DEFAULT)
         n.show()
         return False
 
