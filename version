@@ -23,6 +23,7 @@ def curr_version() -> Version:
     `./src/nautilus_tartex.py`
     """
     ver: Version = parse("0.0.0")
+
     try:
         with open(SRC, mode='r') as f:
             for line in f.readlines():
@@ -34,14 +35,17 @@ def curr_version() -> Version:
             else:
                 print(f"Error: unable to determine version from {SRC}")
                 return ver
+
     except Exception as err:
         raise err
+
     finally:
         return ver
 
 def set_version(ver: str):
     try:
         new_ver: Version = parse(ver)
+
     except InvalidVersion as err:
         print(f"Error: Failed to parse '{ver}' as version")
         raise err
@@ -71,12 +75,20 @@ def set_version(ver: str):
 if __name__ == "__main__":
     if len(sys.argv) > 2:
         print_usage()
+        sys.exit(0)
+
     if len(sys.argv) == 2:
         try:
             set_version(sys.argv[1])
+            sys.exit(0)
+
         except InvalidVersion:
             sys.exit(1)
+
         except Exception as e:
             print(f"Error: Failed to set version: {e}")
+            sys.exit(100)
+
     if len(sys.argv) == 1:
         print(curr_version())
+        sys.exit(0)
