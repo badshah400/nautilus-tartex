@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.0.2] 2025-10-01
+
 ### Added
 
 - Add used .tex or .fls file and generated tarball to list of "Recent" files for easy access
