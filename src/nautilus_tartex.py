@@ -182,6 +182,26 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.timeout_add(
                 0, self._notify_send, "TarTeX Success", success_msg, notif
             )
+            output_file = GLib.build_filenamev(
+                [
+                    file_obj.get_parent_location().get_path(),
+                    success_msg.split()[1]
+                ]
+            )
+            GLib.idle_add(
+                self._update_recent,
+                [file_obj.get_uri(), GLib.filename_to_uri(output_file)]
+            )
+
+    def _update_recent(self, files: list[str]):
+        """
+        Update Gtk.RecentManager with list of uri
+
+        :files: list of uri (list[str])
+        """
+        rec_man = Gtk.RecentManager.get_default()
+        for _f in files:
+            rec_man.add_item(_f)
 
     def on_tartex_activate(self, menu_item, file_obj):
         """
