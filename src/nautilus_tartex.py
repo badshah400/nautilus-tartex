@@ -86,7 +86,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         notification.
         """
         parent_dir = file_obj.get_parent_location()
+
+        # chdir into proj dir so that tartex output msgs use relative file
+        # names w.r.t it
         GLib.chdir(parent_dir.get_path())
+
         tartex_path = shutil.which("tartex")
         if not tartex_path:
             self._notify_send(
