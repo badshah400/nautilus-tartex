@@ -1,5 +1,5 @@
 # vim: set ai et ts=4 sw=4 tw=80:
-# 
+#
 # Copyright 2025 Atri Bhattacharya <badshah400@opensuse.org>
 # Licensed under the terms of MIT License. See LICENSE.txt for details.
 
@@ -86,6 +86,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         notification.
         """
         parent_dir = file_obj.get_parent_location()
+        GLib.chdir(parent_dir.get_path())
         tartex_path = shutil.which("tartex")
         if not tartex_path:
             self._notify_send(
