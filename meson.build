@@ -18,7 +18,7 @@ python.find_installation('python3',
   ],
 )
 
-find_program('tartex', required: true, version: '0.10.3')
+find_program('tartex', required: true, version: '>= 0.10.4')
 
 user_install = get_option('user')
 if user_install
