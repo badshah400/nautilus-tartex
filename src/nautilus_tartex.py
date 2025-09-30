@@ -159,18 +159,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         success, stdout, stderr = proc.communicate_utf8_finish(res)
         exit_code = proc.get_exit_status()
 
-        file_path = file_obj.get_location().get_path()
-        try:
-            file_path_rel_home = Path(file_path).relative_to(Path.home())
-            file_rel_str = f"~{os.sep}{file_path_rel_home!s}"
-        except ValueError:
-            file_rel_str = file_path
         if exit_code:
             GLib.timeout_add(
                 0,
                 self._notify_send,
                 "TarTeX Error",
-                f"🚨 Failed to create archive using {file_rel_str}",
+                f"🚨 Failed to create archive using {file_obj.get_name()}",
                 notif,
             )
             full_error_output = f"Output:\n{stdout}\n"
