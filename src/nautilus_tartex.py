@@ -105,9 +105,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         # Generate a unique filename with a timestamp
         timestamp = datetime.now().strftime(r"%Y%m%d_%H%M%S")
-        output_name = (
-            f"{parent_dir.get_path()}{os.sep}"
-            f"{file_name_stem}_{timestamp}.tar.gz"
+        output_name = GLib.build_filenamev(
+            [parent_dir.get_path(), f"{file_name_stem}_{timestamp}.tar.gz"]
         )
 
         cmd = [tartex_path, file_path, "-b", "-s"]
