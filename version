@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 
 MESON = Path(".") / "meson.build"
-SRC = Path('.') / 'src' / 'nautilus_tartex.py'
+SRC = Path(".") / "src" / "nautilus_tartex.py"
+
 
 def print_usage():
     """TODO: Docstring for print_usage.
@@ -16,6 +17,7 @@ def print_usage():
 
     """
     print(f"Usage: {sys.argv[0]} [version]")
+
 
 def curr_version() -> Version:
     """
@@ -25,7 +27,7 @@ def curr_version() -> Version:
     ver: Version = parse("0.0.0")
 
     try:
-        with open(SRC, mode='r') as f:
+        with open(SRC, mode="r") as f:
             for line in f.readlines():
                 mat = re.search("__version__.*", line)
                 if mat:
@@ -42,6 +44,7 @@ def curr_version() -> Version:
     finally:
         return ver
 
+
 def set_version(ver: str):
     try:
         new_ver: Version = parse(ver)
@@ -51,26 +54,29 @@ def set_version(ver: str):
         raise err
 
     try:
-        for line in fileinput.input(SRC, mode='r', inplace=True, backup=".bak"):
+        for line in fileinput.input(
+            SRC, mode="r", inplace=True, backup=".bak"
+        ):
             new_line, _ = re.subn(
                 r"(__version__\s*=\s*).+$", rf'\1"{new_ver!s}"', line
             )
-            print(new_line, end='')
+            print(new_line, end="")
 
         fileinput.close()
 
         for line in fileinput.input(
-                MESON, mode='r', inplace=True, backup=".bak"
+            MESON, mode="r", inplace=True, backup=".bak"
         ):
             new_line, _ = re.subn(
                 r"^(\s*version\s*:\s*).+,$", rf"\1'{new_ver!s}',", line
             )
-            print(new_line, end='')
+            print(new_line, end="")
 
         fileinput.close()
 
     except Exception as err:
         raise err
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
