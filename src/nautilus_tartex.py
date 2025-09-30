@@ -4,6 +4,7 @@
 # Licensed under the terms of MIT License. See LICENSE.txt for details.
 
 import os
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -177,8 +178,17 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 exit_code
             )
         else:
-            success_msg = stdout.splitlines()[-1]
-            success_msg = success_msg.replace("Summary: ", "", count=1)
+            re_summary = re.compile(r"^Summary:\s(.*)$", re.MULTILINE)
+            success_match = re_summary.search(stdout)
+            if success_match:
+                success_msg = success_match.group(0)
+                success_msg = re_summary.sub(r"\1", success_msg)
+                if success_msg[-1] != ".":  # line wrapped, add next line
+                    success_msg = success_msg + f" {stdout.splitlines()[-1]}"
+            else:  # bare success_msg, hopefully never reached
+                success_msg = (
+                    f"Created TarTeX archive using {file_obj.get_name()}"
+                )
             GLib.timeout_add(
                 0, self._notify_send, "TarTeX Success", success_msg, notif
             )
