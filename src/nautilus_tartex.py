@@ -211,7 +211,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         """
         rec_man = Gtk.RecentManager.get_default()
         for _f in files:
-            rec_man.add_item(_f)
+            if not rec_man.add_item(_f):
+                print(f"Error: Failed to add {_f} to recent manager.")
 
     def on_tartex_activate(self, menu_item, file_obj):
         """
