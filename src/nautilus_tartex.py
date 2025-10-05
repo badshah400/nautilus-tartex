@@ -247,7 +247,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             1: "unknown error",
             2: "cache access",
             3: "git checkout",
-            4: "latexmk compilation",
+            4: "LaTeX compilation",
             5: "tarball creation",
         }
         # Get the active application instance if possible
