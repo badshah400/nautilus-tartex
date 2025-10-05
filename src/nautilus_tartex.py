@@ -260,13 +260,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         if parent_window:
             dialog.set_transient_for(parent_window)
         dialog.set_title("TarTeX error")
-        dialog.default_width = 1600
-        # dialog.default_height = 1200
-        # dialog.set_follows_content_size(True)
+        dialog.set_default_size(width=800, height=400)
 
-        content = Adw.ToolbarView.new()
+        content = Adw.ToolbarView()
         dialog.set_content(content)
-        header_bar = Adw.HeaderBar.new()
+        header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
 
         if exit_code == 4:  # latexmk err, log file saved; add "open log" button
@@ -304,7 +302,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         content.set_content(box1)
 
         box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        BOX2_MARGIN = 6
         box2.set_halign(Gtk.Align.FILL)
+        box2.set_margin_start(BOX2_MARGIN)
+        box2.set_margin_end(BOX2_MARGIN)
         box1.append(box2)
         error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
         error_icon.set_icon_size(Gtk.IconSize.LARGE)
@@ -327,9 +328,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box.set_min_content_height(300)
         scrolled_box.set_min_content_width(600)
         text_view = Gtk.TextView()
+        text_view.set_margin_end(BOX2_MARGIN)
+        text_view.set_margin_start(BOX2_MARGIN)
+        text_view.set_left_margin(BOX2_MARGIN)
+        text_view.set_right_margin(BOX2_MARGIN)
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
-        # text_view.set_wrap_mode(Gtk.WrapMode.WORD)
 
         text_buffer = text_view.get_buffer()
         text_buffer.set_text(error_details)
@@ -344,5 +348,3 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             log_file.get_uri(),
             None,  # LaunchContext (not needed here)
         )
-
-        pass
