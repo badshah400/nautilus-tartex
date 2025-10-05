@@ -243,6 +243,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         """
         Shows a modal dialog with full error details, using a GTK4 layout.
         """
+        err_dict: dict[int, str] = {
+            1: "unknown error",
+            2: "cache access",
+            3: "git checkout",
+            4: "latexmk compilation",
+            5: "tarball creation",
+        }
         # Get the active application instance if possible
         application: Gtk.Application = Gtk.Application.get_default()
         parent_window = None
@@ -250,38 +257,94 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             # Attempt to get the active window (likely the Nautilus window)
             parent_window = application.get_active_window()
 
-        dialog = Adw.Dialog.new()
+        dialog = Adw.ApplicationWindow.new(application)
+        dialog.set_modal(True)
+        if parent_window:
+            dialog.set_transient_for(parent_window)
         dialog.set_title("TarTeX error")
-        dialog.set_follows_content_size(True)
-        dialog_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
+        dialog.default_width = 1600
+        # dialog.default_height = 1200
+        # dialog.set_follows_content_size(True)
+
+        content = Adw.ToolbarView.new()
+        dialog.set_content(content)
+        header_bar = Adw.HeaderBar.new()
+        header_bar.set_show_end_title_buttons(False)
+
+        if exit_code == 4:  # latexmk err, log file saved; add "open log" button
+            log_path = GLib.build_filenamev(
+                [f"{Path.cwd()!s}", "tartex_compile_error.log"]
+            )
+            header_log_button = Gtk.Button.new_with_mnemonic("_Open log")
+            header_log_button.add_css_class("suggested-action")
+            header_bar.pack_start(header_log_button)
+            header_log_button.connect(
+                "clicked",
+                lambda btn: GLib.idle_add(
+                    self._open_log_file, log_path
+                )
+            )
+
+        header_close_button = Gtk.Button.new_with_label("Close")
+        header_bar.pack_end(header_close_button)
+        header_close_button.connect(
+            "clicked",
+            lambda _: dialog.close()
         )
-        dialog.set_child(dialog_box)
+
+        content.add_top_bar(header_bar)
+        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)
 
         box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        dialog_box.append(box1)
+        box1.set_hexpand(True)
+        box1.set_spacing(12)
+        box1.set_halign(Gtk.Align.FILL)
+        box1.set_margin_bottom(12)
+        box1.set_margin_top(12)
+        box1.set_margin_end(12)
+        box1.set_margin_start(12)
+        content.set_content(box1)
 
-        header_bar = Adw.HeaderBar.new()
+        box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        box2.set_halign(Gtk.Align.FILL)
+        box1.append(box2)
+        error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
+        error_icon.set_icon_size(Gtk.IconSize.LARGE)
+        error_icon.set_valign(Gtk.Align.START)
+        box2.append(error_icon)
 
-        box1.append(header_bar)
+        err_summary = Gtk.Label(
+            label=f"<b>TarTeX failed at {err_dict[exit_code]}</b>\n\n",
+            use_markup=True,
+            halign=Gtk.Align.START,
+            wrap=True,
+        )
+        err_summary.set_hexpand(True)
+        box2.append(err_summary)
+
         scrolled_box = Gtk.ScrolledWindow()
         box1.append(scrolled_box)
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
-        scrolled_box.set_min_content_height(100)
+        scrolled_box.set_min_content_height(300)
         scrolled_box.set_min_content_width(600)
-        scrolled_box.margin_bottom = 12
-        scrolled_box.margin_right = 12
-        scrolled_box.margin_top = 12
-        scrolled_box.margin_left = 12
         text_view = Gtk.TextView()
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
-        text_view.set_wrap_mode(Gtk.WrapMode.WORD)
+        # text_view.set_wrap_mode(Gtk.WrapMode.WORD)
 
         text_buffer = text_view.get_buffer()
         text_buffer.set_text(error_details)
 
         scrolled_box.set_child(text_view)
-        dialog.present(parent_window or application)
+        dialog.present()
         return False
+
+    def _open_log_file(self, log_path):
+        log_file = Gio.File.new_for_path(log_path)
+        Gio.AppInfo.launch_default_for_uri(
+            log_file.get_uri(),
+            None,  # LaunchContext (not needed here)
+        )
+
+        pass
