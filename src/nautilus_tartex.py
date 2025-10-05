@@ -286,19 +286,26 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
 
         content.add_top_bar(header_bar)
-        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)
+        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)  # nicer for text-rich content
 
-        box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        CONTENT_SPACING = 12
+
+        BOX1_MARGIN = 12
+        box1 = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=CONTENT_SPACING
+        )
         box1.set_hexpand(True)
-        box1.set_spacing(12)
+        box1.set_vexpand(True)
         box1.set_halign(Gtk.Align.FILL)
-        box1.set_margin_bottom(12)
-        box1.set_margin_top(12)
-        box1.set_margin_end(12)
-        box1.set_margin_start(12)
+        box1.set_margin_bottom(BOX1_MARGIN)
+        box1.set_margin_top(BOX1_MARGIN)
+        box1.set_margin_end(BOX1_MARGIN)
+        box1.set_margin_start(BOX1_MARGIN)
         content.set_content(box1)
 
-        box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        box2 = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=CONTENT_SPACING
+        )
         BOX2_MARGIN = 6
         box2.set_halign(Gtk.Align.FILL)
         box2.set_margin_start(BOX2_MARGIN)
@@ -323,8 +330,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
         scrolled_box.set_min_content_height(300)
-        scrolled_box.set_min_content_width(600)
+        scrolled_box.set_max_content_height(1200)
+        scrolled_box.set_min_content_width(800)
+
         text_view = Gtk.TextView()
+        scrolled_box.set_child(text_view)
+
         text_view.set_margin_end(BOX2_MARGIN)
         text_view.set_margin_start(BOX2_MARGIN)
         text_view.set_left_margin(BOX2_MARGIN)
@@ -335,7 +346,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_buffer = text_view.get_buffer()
         text_buffer.set_text(error_details)
 
-        scrolled_box.set_child(text_view)
         dialog.present(parent_window or application)
         return False
 
