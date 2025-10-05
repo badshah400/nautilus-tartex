@@ -255,15 +255,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             # Attempt to get the active window (likely the Nautilus window)
             parent_window = application.get_active_window()
 
-        dialog = Adw.ApplicationWindow.new(application)
-        dialog.set_modal(True)
-        if parent_window:
-            dialog.set_transient_for(parent_window)
+        dialog = Adw.Dialog.new()
         dialog.set_title("TarTeX error")
-        dialog.set_default_size(width=800, height=400)
+        dialog.set_follows_content_size(True)
 
         content = Adw.ToolbarView()
-        dialog.set_content(content)
+        dialog.set_child(content)
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
 
@@ -339,7 +336,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_buffer.set_text(error_details)
 
         scrolled_box.set_child(text_view)
-        dialog.present()
+        dialog.present(parent_window or application)
         return False
 
     def _open_log_file(self, log_path):
