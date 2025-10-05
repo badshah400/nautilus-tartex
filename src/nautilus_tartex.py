@@ -15,10 +15,12 @@ from pathlib import Path
 try:
     import gi  # type: ignore[import-untyped]
 
+    gi.require_version("Adw", "1")
     gi.require_version("Gtk", "4.0")
     gi.require_version("Nautilus", "4.1")
     gi.require_version("Notify", "0.7")
     from gi.repository import (  # type: ignore[import-untyped]
+        Adw,
         GLib,
         GObject,
         Gio,
@@ -235,76 +237,37 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         n.show()
         return False
 
-    def _show_error_dialog(self, dir_path, error_details, exit_code):
+    def _show_error_dialog(
+            self, dir_path: str, error_details: str, exit_code: int
+    ) -> bool:
         """
         Shows a modal dialog with full error details, using a GTK4 layout.
         """
         # Get the active application instance if possible
-        application = Gtk.Application.get_default()
+        application: Gtk.Application = Gtk.Application.get_default()
         parent_window = None
         if application:
             # Attempt to get the active window (likely the Nautilus window)
             parent_window = application.get_active_window()
 
-        # 1. Create a modal dialog
-        dialog = Gtk.Dialog(
-            title="TarTeX Archive Generation Failed",
-            modal=True,
-            default_width=600,
-            default_height=400,
-            application=application,  # Attach to the main application if available
-            transient_for=parent_window,
+        dialog = Adw.Dialog.new()
+        dialog.set_title("TarTeX error")
+        dialog.set_follows_content_size(True)
+        dialog_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
         )
-
-        # 2. Add the 'Close' button to the action area (standard GTK Dialog footer)
-        dialog.add_button("Close", Gtk.ResponseType.CLOSE)
-
-        # Connect response signal to close the dialog
-        dialog.connect("response", lambda d, r: d.close())
-
-        # 3. Set up the content area box
-        content_area = dialog.get_content_area()
-        content_area.set_orientation(Gtk.Orientation.VERTICAL)
-        content_area.set_spacing(12)
-        content_area.set_margin_top(18)
-        content_area.set_margin_bottom(6)
-        content_area.set_margin_start(18)
-        content_area.set_margin_end(18)
-
-        # 4. Header Message with Icon
-        header_hbox = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=12
-        )
-
-        # Using a standard GNOME error icon
-        error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-        error_icon.set_icon_size(Gtk.IconSize.LARGE)
-        error_icon.set_valign(Gtk.Align.START)
-        header_hbox.append(error_icon)
-
-        # Header text
-        header_label = Gtk.Label(
-            label=f"<b>TarTeX failed with exit code {exit_code}.</b>\n\n",
-            use_markup=True,
-            xalign=0,
-            halign=Gtk.Align.START,
-            wrap=True,
-        )
-        header_hbox.append(header_label)
-        content_area.append(header_hbox)
-
-        # 5. Add the scrollable text area for details
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_vexpand(True)
-        scrolled_window.set_hexpand(True)
-        scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
-        )
-        scrolled_window.set_margin_top(6)
-        scrolled_window.get_style_context().add_class("dialog-output-frame")
-
-        # Use Gtk.TextView inside Gtk.ScrolledWindow for proper selection and
-        # scrolling of large output
+        dialog.set_child(dialog_box)
+        dialog_box.append(Adw.HeaderBar.new())
+        box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        scrolled_box = Gtk.ScrolledWindow()
+        scrolled_box.set_hexpand(True)
+        scrolled_box.set_vexpand(True)
+        scrolled_box.set_min_content_height(100)
+        scrolled_box.set_min_content_width(600)
+        scrolled_box.margin_bottom = 12
+        scrolled_box.margin_right = 12
+        scrolled_box.margin_top = 12
+        scrolled_box.margin_left = 12
         text_view = Gtk.TextView()
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
@@ -313,8 +276,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_buffer = text_view.get_buffer()
         text_buffer.set_text(error_details)
 
-        scrolled_window.set_child(text_view)
-        content_area.append(scrolled_window)
-
-        dialog.present()
+        scrolled_box.set_child(text_view)
+        box1.append(scrolled_box)
+        dialog_box.append(box1)
+        dialog.present(parent_window or application)
         return False
