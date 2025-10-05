@@ -112,7 +112,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             [parent_dir.get_path(), f"{file_name_stem}_{timestamp}.tar.gz"]
         )
 
-        cmd = [tartex_path, file_path, "-b", "-s"]
+        cmd = [tartex_path, file_path, "-b", "-v", "-s"]
         if use_git:
             cmd += [
                 "--overwrite",
@@ -169,9 +169,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 f"🚨 Failed to create archive using {file_obj.get_name()}",
                 notif,
             )
-            full_error_output = f"Output:\n{stdout}\n"
-            if stderr:
-                full_error_output += f"\nError log:\n{stderr}\n"
+            full_error_output = f"{stdout}\n"
             GLib.timeout_add(
                 0,
                 self._show_error_dialog,
