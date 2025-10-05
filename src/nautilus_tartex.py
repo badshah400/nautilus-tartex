@@ -19,12 +19,12 @@ try:
     gi.require_version("Nautilus", "4.1")
     gi.require_version("Notify", "0.7")
     from gi.repository import (  # type: ignore[import-untyped]
-        Nautilus,
-        Notify,
         GLib,
         GObject,
         Gio,
         Gtk,
+        Nautilus,
+        Notify,
     )
 except ImportError:
     pass
