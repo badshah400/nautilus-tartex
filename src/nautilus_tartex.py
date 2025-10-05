@@ -257,9 +257,15 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             orientation=Gtk.Orientation.VERTICAL,
         )
         dialog.set_child(dialog_box)
-        dialog_box.append(Adw.HeaderBar.new())
-        box1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+
+        box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        dialog_box.append(box1)
+
+        header_bar = Adw.HeaderBar.new()
+
+        box1.append(header_bar)
         scrolled_box = Gtk.ScrolledWindow()
+        box1.append(scrolled_box)
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
         scrolled_box.set_min_content_height(100)
@@ -277,7 +283,5 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_buffer.set_text(error_details)
 
         scrolled_box.set_child(text_view)
-        box1.append(scrolled_box)
-        dialog_box.append(box1)
         dialog.present(parent_window or application)
         return False
