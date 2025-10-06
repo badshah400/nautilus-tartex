@@ -432,7 +432,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             end_iter = text_buffer.get_iter_at_offset(match.end())
             text_buffer.apply_tag_by_name("info-dim", start_iter, end_iter)
 
-        # Increase spacing between lines
+        # Increase spacing between lines, accounting for wrapping
         spacing_tag = Gtk.TextTag.new("line-spacing")
         spacing_tag.set_property("pixels-above-lines", 8)
         tag_table.add(spacing_tag)
@@ -443,9 +443,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
 
         # highlight line numbers (line XX or l.XX)
-        accent_color = Adw.StyleManager.get_default().get_accent_color_rgba()
+        default_adw_style = Adw.StyleManager.get_default()
+        acc_color = default_adw_style.get_accent_color()
+        acc_color_standalone = acc_color.to_standalone_rgba(
+            default_adw_style.get_dark()
+        )
         lnum_tag = Gtk.TextTag.new("line-num")
-        lnum_tag.set_property("foreground", accent_color.to_string())
+        lnum_tag.set_property("foreground", acc_color_standalone.to_string())
         tag_table.add(lnum_tag)
         re_lnum = re.compile(r"(line |l\.)(\d+)")
         for match in re_lnum.finditer(text):
