@@ -319,11 +319,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         header_bar.set_show_end_title_buttons(False)
 
         if exit_code == 4:  # latexmk err, log file saved; add "open log" button
-            log_path = GLib.build_filenamev(
-                [f"{Path.cwd()!s}", "tartex_compile_error.log"]
-            )
+            log_filename = "tartex_compile_error.log"
+            log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
             header_log_button = Gtk.Button.new_with_mnemonic("_Open log")
             header_log_button.add_css_class("suggested-action")
+            header_log_button.set_tooltip_markup(
+                f"Open <b>{log_filename}</b> in Text Editor"
+            )
             header_bar.pack_start(header_log_button)
             header_log_button.connect(
                 "clicked",
@@ -335,6 +337,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # Copy to clipboard button
         header_copy_button = Gtk.Button.new_with_mnemonic("_Copy")
         header_copy_button.set_icon_name("edit-copy-symbolic")
+        header_copy_button.set_tooltip_text("Copy Output Text")
         if exit_code != 4:
             header_copy_button.add_css_class("suggested-action")
         header_bar.pack_start(header_copy_button)
