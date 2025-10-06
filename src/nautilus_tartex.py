@@ -327,7 +327,66 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_view.set_wrap_mode(Gtk.WrapMode.NONE)
 
         tag_table = text_buffer.get_tag_table()
+        self._markup_text(text_buffer, tag_table)
 
+        header_bar = Adw.HeaderBar()
+        header_bar.set_show_end_title_buttons(False)
+
+        if exit_code == 4:  # latexmk err, log file saved; add "open log" button
+            log_filename = "tartex_compile_error.log"
+            log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
+            header_log_button = Gtk.Button.new_with_mnemonic("_Open log")
+            header_log_button.add_css_class("suggested-action")
+            header_log_button.set_tooltip_markup(
+                f"Open <b>{log_filename}</b> in Text Editor"
+            )
+            header_bar.pack_start(header_log_button)
+            header_log_button.connect(
+                "clicked",
+                lambda _: GLib.idle_add(
+                    self._open_log_file, log_path
+                )
+            )
+
+        # Copy to clipboard button
+        header_copy_button = Gtk.Button.new_with_mnemonic("_Copy")
+        header_copy_button.set_icon_name("edit-copy-symbolic")
+        header_copy_button.set_tooltip_text("Copy Output Text")
+        if exit_code != 4:
+            header_copy_button.add_css_class("suggested-action")
+        header_bar.pack_start(header_copy_button)
+        header_copy_button.connect(
+            "clicked",
+            lambda _: GLib.idle_add(
+                text_view.get_clipboard().set, error_details
+            )
+        )
+
+        header_close_button = Gtk.Button.new_with_label("Close")
+        header_close_button.add_css_class("destructive-action")
+        header_bar.pack_end(header_close_button)
+        header_close_button.connect(
+            "clicked",
+            lambda _: dialog.close()
+        )
+
+        content.add_top_bar(header_bar)
+        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)  # nicer for text-rich content
+
+        dialog.present(parent_window or application)
+        return False
+
+    def _open_log_file(self, log_path):
+        log_file = Gio.File.new_for_path(log_path)
+        Gio.AppInfo.launch_default_for_uri(
+            log_file.get_uri(),
+            None,  # LaunchContext (not needed here)
+        )
+
+    def _markup_text(self, text_buffer, tag_table):
+        text = text_buffer.get_text(
+            text_buffer.get_start_iter(), text_buffer.get_end_iter(), False
+        )
         error_tag = Gtk.TextTag.new("error")
         error_tag.set_property("foreground", "red")
         highlight_tag = Gtk.TextTag.new("error-highlight")
@@ -337,11 +396,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         tag_table.add(error_tag)
         tag_table.add(highlight_tag)
         tag_table.add(info_tag)
-
-        # Get the full text for regex search
-        text = text_buffer.get_text(
-            text_buffer.get_start_iter(), text_buffer.get_end_iter(), False
-        )
 
         # Error line may wrap into a second line (which will then start with
         # whitespace)
@@ -398,58 +452,3 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             start_iter = text_buffer.get_iter_at_offset(match.start())
             end_iter = text_buffer.get_iter_at_offset(match.end())
             text_buffer.apply_tag_by_name("line-num", start_iter, end_iter)
-
-
-        header_bar = Adw.HeaderBar()
-        header_bar.set_show_end_title_buttons(False)
-
-        if exit_code == 4:  # latexmk err, log file saved; add "open log" button
-            log_filename = "tartex_compile_error.log"
-            log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
-            header_log_button = Gtk.Button.new_with_mnemonic("_Open log")
-            header_log_button.add_css_class("suggested-action")
-            header_log_button.set_tooltip_markup(
-                f"Open <b>{log_filename}</b> in Text Editor"
-            )
-            header_bar.pack_start(header_log_button)
-            header_log_button.connect(
-                "clicked",
-                lambda _: GLib.idle_add(
-                    self._open_log_file, log_path
-                )
-            )
-
-        # Copy to clipboard button
-        header_copy_button = Gtk.Button.new_with_mnemonic("_Copy")
-        header_copy_button.set_icon_name("edit-copy-symbolic")
-        header_copy_button.set_tooltip_text("Copy Output Text")
-        if exit_code != 4:
-            header_copy_button.add_css_class("suggested-action")
-        header_bar.pack_start(header_copy_button)
-        header_copy_button.connect(
-            "clicked",
-            lambda _: GLib.idle_add(
-                text_view.get_clipboard().set, error_details
-            )
-        )
-
-        header_close_button = Gtk.Button.new_with_label("Close")
-        header_close_button.add_css_class("destructive-action")
-        header_bar.pack_end(header_close_button)
-        header_close_button.connect(
-            "clicked",
-            lambda _: dialog.close()
-        )
-
-        content.add_top_bar(header_bar)
-        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)  # nicer for text-rich content
-
-        dialog.present(parent_window or application)
-        return False
-
-    def _open_log_file(self, log_path):
-        log_file = Gio.File.new_for_path(log_path)
-        Gio.AppInfo.launch_default_for_uri(
-            log_file.get_uri(),
-            None,  # LaunchContext (not needed here)
-        )
