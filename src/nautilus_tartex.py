@@ -352,6 +352,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         header_copy_button = Gtk.Button.new_with_mnemonic("_Copy")
         header_copy_button.set_icon_name("edit-copy-symbolic")
         header_copy_button.set_tooltip_text("Copy Output Text")
+        header_copy_button.add_css_class("raised")
         if exit_code != 4:
             header_copy_button.add_css_class("suggested-action")
         header_bar.pack_start(header_copy_button)
