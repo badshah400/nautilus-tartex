@@ -314,6 +314,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_view.set_right_margin(BOX2_MARGIN)
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
+        text_view.set_wrap_mode(Gtk.WrapMode.NONE)
 
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
