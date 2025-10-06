@@ -250,6 +250,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             4: "LaTeX compilation",
             5: "tarball creation",
         }
+
         # Get the active application instance if possible
         application: Gtk.Application = Gtk.Application.get_default()
         parent_window = None
@@ -342,8 +343,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             text_buffer.get_start_iter(), text_buffer.get_end_iter(), False
         )
 
+        # Error line may wrap into a second line (which will then start with
+        # whitespace)
         error_pattern = re.compile(
-            r'^(Error|FATAL|Critical) (.*)$', re.IGNORECASE | re.MULTILINE
+            r"^(Error|FATAL|Critical) (?P<err1>.*)(?:\r\n\s|\n\s)?"
+            r"(?P<err2>.*)?",
+            re.IGNORECASE | re.MULTILINE
         )
 
         # Apply ERROR tags
@@ -351,15 +356,22 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             start_iter = text_buffer.get_iter_at_offset(match.start(1))
             end_iter = text_buffer.get_iter_at_offset(match.end(1))
             text_buffer.apply_tag_by_name("error", start_iter, end_iter)
-            start_iter = text_buffer.get_iter_at_offset(match.start(2))
-            end_iter = text_buffer.get_iter_at_offset(match.end(2))
+            start_iter = text_buffer.get_iter_at_offset(match.start("err1"))
+            end_iter = text_buffer.get_iter_at_offset(match.end("err1"))
+            text_buffer.apply_tag_by_name(
+                "error-highlight", start_iter, end_iter
+            )
+            if match.group("err2"):
+                start_iter = text_buffer.get_iter_at_offset(match.start("err2"))
+                end_iter = text_buffer.get_iter_at_offset(match.end("err2"))
             text_buffer.apply_tag_by_name(
                 "error-highlight", start_iter, end_iter
             )
 
-        # INFO tags
+        # INFO line tagging: lines may wrap into the next line, but wrapped line
+        # starts with whitespace
         info_pattern = re.compile(
-            r"^INFO .*$", re.IGNORECASE | re.MULTILINE
+            r"^INFO .+(?:\r\n\s|\n\s)?.*", re.IGNORECASE | re.MULTILINE
         )
         for match in info_pattern.finditer(text):
             start_iter = text_buffer.get_iter_at_offset(match.start())
