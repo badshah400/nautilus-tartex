@@ -310,7 +310,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box.set_propagate_natural_width(True)
 
         text_view = Gtk.TextView()
-        text_view.get_buffer().set_text(error_details)
+        text_buffer = Gtk.TextBuffer()
+        text_buffer.set_text(error_details)
+        text_view.set_buffer(text_buffer)
         scrolled_box.set_child(text_view)
         text_view.set_margin_end(BOX2_MARGIN)
         text_view.set_margin_start(BOX2_MARGIN)
@@ -319,6 +321,27 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
         text_view.set_wrap_mode(Gtk.WrapMode.NONE)
+
+        tag_table = text_buffer.get_tag_table()
+
+        error_tag = Gtk.TextTag.new("error")
+        error_tag.set_property("foreground", "red")
+        tag_table.add(error_tag)
+
+        # Get the full text for regex search
+        text = text_buffer.get_text(
+            text_buffer.get_start_iter(), text_buffer.get_end_iter(), False
+        )
+
+        error_pattern = re.compile(
+            r'^(Error|FATAL|Critical )', re.IGNORECASE | re.MULTILINE
+        )
+
+        # Apply ERROR tags
+        for match in error_pattern.finditer(text):
+            start_iter = text_buffer.get_iter_at_offset(match.start())
+            end_iter = text_buffer.get_iter_at_offset(match.end())
+            text_buffer.apply_tag_by_name("error", start_iter, end_iter)
 
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
