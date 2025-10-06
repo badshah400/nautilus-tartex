@@ -387,6 +387,19 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             end_iter = text_buffer.get_iter_at_offset(match.end())
             text_buffer.apply_tag_by_name("line-spacing", start_iter, end_iter)
 
+
+        # highlight line numbers (line XX or l.XX)
+        accent_color = Adw.StyleManager.get_default().get_accent_color_rgba()
+        lnum_tag = Gtk.TextTag.new("line-num")
+        lnum_tag.set_property("foreground", accent_color.to_string())
+        tag_table.add(lnum_tag)
+        re_lnum = re.compile(r"(line |l\.)(\d+)")
+        for match in re_lnum.finditer(text):
+            start_iter = text_buffer.get_iter_at_offset(match.start())
+            end_iter = text_buffer.get_iter_at_offset(match.end())
+            text_buffer.apply_tag_by_name("line-num", start_iter, end_iter)
+
+
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
 
