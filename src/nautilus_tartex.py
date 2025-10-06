@@ -379,12 +379,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             text_buffer.apply_tag_by_name("info-dim", start_iter, end_iter)
 
         # Increase spacing between lines
-        spacing_tag = Gtk.TextTag.new("line_spacing")
-        spacing_tag.set_property("pixels-below-lines", 3)
+        spacing_tag = Gtk.TextTag.new("line-spacing")
+        spacing_tag.set_property("pixels-above-lines", 8)
         tag_table.add(spacing_tag)
-        start_iter = text_buffer.get_start_iter()
-        end_iter = text_buffer.get_end_iter()
-        text_buffer.apply_tag_by_name("line_spacing", start_iter, end_iter)
+        for match in re.finditer(r"^\S", text, re.MULTILINE):
+            start_iter = text_buffer.get_iter_at_offset(match.start())
+            end_iter = text_buffer.get_iter_at_offset(match.end())
+            text_buffer.apply_tag_by_name("line-spacing", start_iter, end_iter)
 
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
