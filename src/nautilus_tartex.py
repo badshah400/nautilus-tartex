@@ -261,38 +261,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         content = Adw.ToolbarView()
         dialog.set_child(content)
-        header_bar = Adw.HeaderBar()
-        header_bar.set_show_end_title_buttons(False)
-
-        if exit_code == 4:  # latexmk err, log file saved; add "open log" button
-            log_path = GLib.build_filenamev(
-                [f"{Path.cwd()!s}", "tartex_compile_error.log"]
-            )
-            header_log_button = Gtk.Button.new_with_mnemonic("_Open log")
-            header_log_button.add_css_class("suggested-action")
-            header_bar.pack_start(header_log_button)
-            header_log_button.connect(
-                "clicked",
-                lambda btn: GLib.idle_add(
-                    self._open_log_file, log_path
-                )
-            )
-
-        header_close_button = Gtk.Button.new_with_label("Close")
-        header_bar.pack_end(header_close_button)
-        header_close_button.connect(
-            "clicked",
-            lambda _: dialog.close()
-        )
-
-        content.add_top_bar(header_bar)
-        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)  # nicer for text-rich content
-
-        CONTENT_SPACING = 12
 
         BOX1_MARGIN = 12
         box1 = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=CONTENT_SPACING
+            orientation=Gtk.Orientation.VERTICAL, spacing=24
         )
         box1.set_hexpand(True)
         box1.set_vexpand(True)
@@ -304,7 +276,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         content.set_content(box1)
 
         box2 = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=CONTENT_SPACING
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=12
         )
         BOX2_MARGIN = 6
         box2.set_halign(Gtk.Align.FILL)
@@ -334,8 +306,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box.set_min_content_width(800)
 
         text_view = Gtk.TextView()
+        text_view.get_buffer().set_text(error_details)
         scrolled_box.set_child(text_view)
-
         text_view.set_margin_end(BOX2_MARGIN)
         text_view.set_margin_start(BOX2_MARGIN)
         text_view.set_left_margin(BOX2_MARGIN)
@@ -343,8 +315,45 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
 
-        text_buffer = text_view.get_buffer()
-        text_buffer.set_text(error_details)
+        header_bar = Adw.HeaderBar()
+        header_bar.set_show_end_title_buttons(False)
+
+        if exit_code == 4:  # latexmk err, log file saved; add "open log" button
+            log_path = GLib.build_filenamev(
+                [f"{Path.cwd()!s}", "tartex_compile_error.log"]
+            )
+            header_log_button = Gtk.Button.new_with_mnemonic("_Open log")
+            header_log_button.add_css_class("suggested-action")
+            header_bar.pack_start(header_log_button)
+            header_log_button.connect(
+                "clicked",
+                lambda _: GLib.idle_add(
+                    self._open_log_file, log_path
+                )
+            )
+
+        # Copy to clipboard button
+        header_copy_button = Gtk.Button.new_with_mnemonic("_Copy")
+        header_copy_button.set_icon_name("edit-copy-symbolic")
+        if exit_code != 4:
+            header_copy_button.add_css_class("suggested-action")
+        header_bar.pack_start(header_copy_button)
+        header_copy_button.connect(
+            "clicked",
+            lambda _: GLib.idle_add(
+                text_view.get_clipboard().set, error_details
+            )
+        )
+
+        header_close_button = Gtk.Button.new_with_label("Close")
+        header_bar.pack_end(header_close_button)
+        header_close_button.connect(
+            "clicked",
+            lambda _: dialog.close()
+        )
+
+        content.add_top_bar(header_bar)
+        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)  # nicer for text-rich content
 
         dialog.present(parent_window or application)
         return False
