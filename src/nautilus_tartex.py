@@ -19,6 +19,7 @@ try:
     gi.require_version("Gtk", "4.0")
     gi.require_version("Nautilus", "4.1")
     gi.require_version("Notify", "0.7")
+    gi.require_version("Pango", "1.0")
     from gi.repository import (  # type: ignore[import-untyped]
         Adw,
         GLib,
@@ -27,6 +28,7 @@ try:
         Gtk,
         Nautilus,
         Notify,
+        Pango,
     )
 except ImportError:
     pass
@@ -326,7 +328,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         error_tag = Gtk.TextTag.new("error")
         error_tag.set_property("foreground", "red")
+        highlight_tag = Gtk.TextTag.new("error-highlight")
+        highlight_tag.set_property("weight", Pango.Weight.BOLD)
+        info_tag = Gtk.TextTag.new("info-dim")
+        info_tag.set_property("foreground", "grey")
         tag_table.add(error_tag)
+        tag_table.add(highlight_tag)
+        tag_table.add(info_tag)
 
         # Get the full text for regex search
         text = text_buffer.get_text(
@@ -334,14 +342,36 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
 
         error_pattern = re.compile(
-            r'^(Error|FATAL|Critical )', re.IGNORECASE | re.MULTILINE
+            r'^(Error|FATAL|Critical) (.*)$', re.IGNORECASE | re.MULTILINE
         )
 
         # Apply ERROR tags
         for match in error_pattern.finditer(text):
+            start_iter = text_buffer.get_iter_at_offset(match.start(1))
+            end_iter = text_buffer.get_iter_at_offset(match.end(1))
+            text_buffer.apply_tag_by_name("error", start_iter, end_iter)
+            start_iter = text_buffer.get_iter_at_offset(match.start(2))
+            end_iter = text_buffer.get_iter_at_offset(match.end(2))
+            text_buffer.apply_tag_by_name(
+                "error-highlight", start_iter, end_iter
+            )
+
+        # INFO tags
+        info_pattern = re.compile(
+            r"^INFO .*$", re.IGNORECASE | re.MULTILINE
+        )
+        for match in info_pattern.finditer(text):
             start_iter = text_buffer.get_iter_at_offset(match.start())
             end_iter = text_buffer.get_iter_at_offset(match.end())
-            text_buffer.apply_tag_by_name("error", start_iter, end_iter)
+            text_buffer.apply_tag_by_name("info-dim", start_iter, end_iter)
+
+        # Increase spacing between lines
+        spacing_tag = Gtk.TextTag.new("line_spacing")
+        spacing_tag.set_property("pixels-below-lines", 3)
+        tag_table.add(spacing_tag)
+        start_iter = text_buffer.get_start_iter()
+        end_iter = text_buffer.get_end_iter()
+        text_buffer.apply_tag_by_name("line_spacing", start_iter, end_iter)
 
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
