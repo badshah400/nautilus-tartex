@@ -286,6 +286,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
         error_icon.set_icon_size(Gtk.IconSize.LARGE)
         error_icon.set_valign(Gtk.Align.START)
+        error_icon.add_css_class("error")
         box2.append(error_icon)
 
         err_summary = Gtk.Label(
@@ -350,6 +351,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
 
         header_close_button = Gtk.Button.new_with_label("Close")
+        header_close_button.add_css_class("destructive-action")
         header_bar.pack_end(header_close_button)
         header_close_button.connect(
             "clicked",
