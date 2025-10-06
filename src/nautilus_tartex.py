@@ -317,7 +317,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         box2.append(error_icon)
 
         err_summary = Gtk.Label(
-            label=f"<b>TarTeX failed at {err_dict[exit_code]}</b>\n\n",
+            label=f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
             use_markup=True,
             halign=Gtk.Align.START,
             wrap=True,
