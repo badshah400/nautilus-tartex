@@ -332,8 +332,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_view.set_wrap_mode(Gtk.WrapMode.NONE)
 
         # Copy to clipboard button
-        copy_button = Gtk.Button.new_with_mnemonic("_Copy")
-        copy_button.set_icon_name("edit-copy-symbolic")
+        copy_button = Gtk.Button.new_from_icon_name("edit-copy-symbolic")
         copy_button.set_tooltip_text("Copy Output Text")
         copy_button.add_css_class("raised")
         copy_button.add_css_class("circular")
