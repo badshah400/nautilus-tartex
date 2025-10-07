@@ -312,8 +312,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box.set_vexpand(True)
         scrolled_box.set_min_content_height(200)
         scrolled_box.set_max_content_height(600)
-        scrolled_box.set_min_content_width(800)
-        scrolled_box.set_max_content_width(1200)
+        scrolled_box.set_min_content_width(900)
+        scrolled_box.set_max_content_width(1600)
         scrolled_box.set_propagate_natural_height(True)
         scrolled_box.set_propagate_natural_width(True)
 
