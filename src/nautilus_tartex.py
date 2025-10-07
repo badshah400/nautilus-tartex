@@ -337,6 +337,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         copy_button.add_css_class("raised")
         copy_button.add_css_class("circular")
         copy_button.add_css_class("suggested-action")
+        copy_button.set_opacity(0.8)
         copy_button.connect(
             "clicked",
             lambda _: GLib.idle_add(
@@ -477,7 +478,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         dialog.present(parent_window or application)
         return False
-
 
     def _open_log_file(self, log_path):
         log_file = Gio.File.new_for_path(log_path)
