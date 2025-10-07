@@ -360,8 +360,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         if exit_code == 4:  # latexmk err, log file saved; add "open log" button
             log_filename = "tartex_compile_error.log"
             log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
-            header_log_button = Gtk.Button.new_with_mnemonic("_Open log")
-            header_log_button.add_css_class("suggested-action")
+            header_log_button = Gtk.Button.new_with_mnemonic("_Open Log")
             header_log_button.set_tooltip_markup(
                 f"Open <b>{log_filename}</b> in Text Editor"
             )
