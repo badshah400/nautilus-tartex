@@ -386,7 +386,32 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             lambda _: dialog.close()
         )
 
+        # header searchbar
+        header_search_button = Gtk.Button.new_from_icon_name(
+            "edit-find-symbolic"
+        )
+        header_bar.pack_start(header_search_button)
+
+        header_search_bar = Gtk.SearchBar()
+        header_search_bar.set_search_mode(False)
+        # header_search_bar.add_css_class("inline")
+        def _on_search_click(btn):
+            search_mode = header_search_bar.get_search_mode()
+            header_search_bar.set_search_mode(not search_mode)
+            if search_mode:
+                header_search_bar.grab_focus()
+            else:
+                header_search_bar.unset_state_flags(Gtk.StateFlags.FOCUSED)
+
+        header_search_button.connect("clicked", _on_search_click)
+
+        search_entry = Gtk.SearchEntry()
+        search_entry.set_hexpand(True)
+        # search_entry.set_halign(Gtk.Align.FILL)
+        header_search_bar.set_child(search_entry)
+
         content.add_top_bar(header_bar)
+        content.add_top_bar(header_search_bar)
         content.set_top_bar_style(Adw.ToolbarStyle.RAISED)  # nicer for text-rich content
 
         dialog.present(parent_window or application)
