@@ -443,14 +443,19 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             text_buffer.apply_tag_by_name("line-spacing", start_iter, end_iter)
 
 
-        # highlight line numbers (line XX or l.XX)
+        # highlight line numbers (line XX or l.XX) using accent if possible
         default_adw_style = Adw.StyleManager.get_default()
-        acc_color = default_adw_style.get_accent_color()
-        acc_color_standalone = acc_color.to_standalone_rgba(
-            default_adw_style.get_dark()
-        )
+        if default_adw_style.get_system_supports_accent_colors():
+            acc_color = default_adw_style.get_accent_color()
+            acc_color_standalone_rgba = acc_color.to_standalone_rgba(
+                default_adw_style.get_dark()
+            )
+            acc_color_standalone = acc_color_standalone_rgba.to_string()
+        else:
+            acc_color_standalone = "Teal"
+
         lnum_tag = Gtk.TextTag.new("line-num")
-        lnum_tag.set_property("foreground", acc_color_standalone.to_string())
+        lnum_tag.set_property("foreground", acc_color_standalone)
         tag_table.add(lnum_tag)
         re_lnum = re.compile(r"(line |l\.)(\d+)")
         for match in re_lnum.finditer(text):
