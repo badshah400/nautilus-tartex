@@ -45,6 +45,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     Notify.init("TarTeX")
 
     def __init__(self):
+        # Set terminal width long enough that most tartex log messages do not
+        # have to wrap their lines. Also makes wrapping consistent and not
+        # dependent on the width of the console launching nautilus (or 80
+        # when started from the desktop menus).
+        os.environ["COLUMNS"] = "132"
+
         os.environ["TERM"] = "dumb"  # suppress rich formatting
         GObject.GObject.__init__(self)
 
