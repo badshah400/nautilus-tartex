@@ -302,7 +302,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         box2.append(err_summary)
 
         scrolled_box = Gtk.ScrolledWindow()
-        box1.append(scrolled_box)
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
         scrolled_box.set_min_content_height(200)
@@ -326,6 +325,32 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_view.set_monospace(True)
         text_view.set_wrap_mode(Gtk.WrapMode.NONE)
 
+        # Copy to clipboard button
+        copy_button = Gtk.Button.new_with_mnemonic("_Copy")
+        copy_button.set_icon_name("edit-copy-symbolic")
+        copy_button.set_tooltip_text("Copy Output Text")
+        copy_button.add_css_class("raised")
+        copy_button.add_css_class("circular")
+        copy_button.add_css_class("suggested-action")
+        copy_button.connect(
+            "clicked",
+            lambda _: GLib.idle_add(
+                text_view.get_clipboard().set, error_details
+            )
+        )
+
+        copy_button.set_halign(Gtk.Align.END)
+        copy_button.set_valign(Gtk.Align.START)
+        copy_button.set_size_request(32, 32)
+        copy_button.set_margin_top(12)
+        copy_button.set_margin_end(16)  # a bit more margin, for scrollbar space
+
+        copy_overlay = Gtk.Overlay()
+        copy_overlay.add_overlay(copy_button)
+        copy_overlay.set_child(scrolled_box)
+
+        box1.append(copy_overlay)
+
         tag_table = text_buffer.get_tag_table()
         self._markup_text(text_buffer, tag_table)
 
@@ -348,20 +373,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 )
             )
 
-        # Copy to clipboard button
-        header_copy_button = Gtk.Button.new_with_mnemonic("_Copy")
-        header_copy_button.set_icon_name("edit-copy-symbolic")
-        header_copy_button.set_tooltip_text("Copy Output Text")
-        header_copy_button.add_css_class("raised")
-        if exit_code != 4:
-            header_copy_button.add_css_class("suggested-action")
-        header_bar.pack_start(header_copy_button)
-        header_copy_button.connect(
-            "clicked",
-            lambda _: GLib.idle_add(
-                text_view.get_clipboard().set, error_details
-            )
-        )
 
         header_close_button = Gtk.Button.new_with_label("Close")
         header_close_button.add_css_class("destructive-action")
