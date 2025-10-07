@@ -357,7 +357,29 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         box1.append(copy_overlay)
 
         tag_table = text_buffer.get_tag_table()
-        self._markup_text(text_buffer, tag_table)
+
+        # highlight tag for search matches
+        highlight_tag = Gtk.TextTag.new("match_highlight")
+        default_adw_style = Adw.StyleManager.get_default()
+        is_dark_theme = default_adw_style.get_dark()
+        if default_adw_style.get_system_supports_accent_colors():
+            acc_color = default_adw_style.get_accent_color()
+            highlight_back = acc_color.to_rgba()
+            highlight_back.alpha = 0.3
+            highlight_tag.set_property(
+                "background-rgba",
+                highlight_back
+            )
+        else:
+            highlight_tag.set_property(
+                "background", "yellow" if is_dark_theme else "cyan"
+            )
+            highlight_tag.set_property(
+                "foreground", "black" if is_dark_theme else None
+            )
+        tag_table.add(highlight_tag)
+
+        self._markup_text(text_buffer, tag_table, acc_color, is_dark_theme)
 
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
@@ -377,7 +399,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 )
             )
 
-
         header_close_button = Gtk.Button.new_with_label("Close")
         header_close_button.add_css_class("destructive-action")
         header_bar.pack_end(header_close_button)
@@ -385,6 +406,42 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             "clicked",
             lambda _: dialog.close()
         )
+
+        # search logic helper function
+        def _on_search_text_changed(search_entry, *args):
+            """Performs case-insensitive search and highlights matches."""
+            search_query = search_entry.get_text().strip()
+
+            # Remove existing highlights from the entire buffer
+            start_iter = text_buffer.get_start_iter()
+            end_iter = text_buffer.get_end_iter()
+            text_buffer.remove_tag(highlight_tag, start_iter, end_iter)
+
+            if not search_query:
+                return
+
+            search_query_lower = search_query.lower()
+            text_to_search_lower = error_details.lower()
+
+            # Iterate through text and apply new highlights
+            offset = 0
+            while True:
+                match_index = text_to_search_lower.find(
+                    search_query_lower, offset
+                )
+
+                if match_index == -1:
+                    break  # No more matches found
+
+                start_match_iter = text_buffer.get_iter_at_offset(match_index)
+
+                # Get the end iterator (start + length of query)
+                end_match_iter = text_buffer.get_iter_at_offset(
+                    match_index + len(search_query)
+                )
+
+                text_buffer.apply_tag(highlight_tag, start_match_iter, end_match_iter)
+                offset = match_index + len(search_query)
 
         # header searchbar
         header_search_button = Gtk.Button.new_from_icon_name(
@@ -394,21 +451,25 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         header_search_bar = Gtk.SearchBar()
         header_search_bar.set_search_mode(False)
-        # header_search_bar.add_css_class("inline")
+
         def _on_search_click(btn):
             search_mode = header_search_bar.get_search_mode()
             header_search_bar.set_search_mode(not search_mode)
-            if search_mode:
-                header_search_bar.grab_focus()
+            if not search_mode: # If search mode is being activated (was False, now True)
+                search_entry.grab_focus()
             else:
-                header_search_bar.unset_state_flags(Gtk.StateFlags.FOCUSED)
+                # When closing the search bar, clear text and reset highlights
+                search_entry.set_text("")
+                _on_search_text_changed(search_entry)
 
         header_search_button.connect("clicked", _on_search_click)
 
         search_entry = Gtk.SearchEntry()
         search_entry.set_hexpand(True)
-        # search_entry.set_halign(Gtk.Align.FILL)
+        search_entry.connect("search-changed", _on_search_text_changed)
         header_search_bar.set_child(search_entry)
+        header_search_bar.set_key_capture_widget(text_view)
+        header_search_bar.connect_entry(search_entry)  # Allows using the ESC key to exit search mode
 
         content.add_top_bar(header_bar)
         content.add_top_bar(header_search_bar)
@@ -417,6 +478,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog.present(parent_window or application)
         return False
 
+
     def _open_log_file(self, log_path):
         log_file = Gio.File.new_for_path(log_path)
         Gio.AppInfo.launch_default_for_uri(
@@ -424,7 +486,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             None,  # LaunchContext (not needed here)
         )
 
-    def _markup_text(self, text_buffer, tag_table):
+    def _markup_text(
+        self,
+        text_buffer: Gtk.TextBuffer,
+        tag_table: Gtk.TextTagTable,
+        acc_color: Adw.AccentColor,
+        dark_theme: bool,
+    ):
         text = text_buffer.get_text(
             text_buffer.get_start_iter(), text_buffer.get_end_iter(), False
         )
@@ -484,11 +552,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
 
         # highlight line numbers (line XX or l.XX) using accent if possible
-        default_adw_style = Adw.StyleManager.get_default()
-        if default_adw_style.get_system_supports_accent_colors():
-            acc_color = default_adw_style.get_accent_color()
+        if acc_color:
             acc_color_standalone_rgba = acc_color.to_standalone_rgba(
-                default_adw_style.get_dark()
+                dark_theme
             )
             acc_color_standalone = acc_color_standalone_rgba.to_string()
         else:
@@ -502,3 +568,4 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             start_iter = text_buffer.get_iter_at_offset(match.start())
             end_iter = text_buffer.get_iter_at_offset(match.end())
             text_buffer.apply_tag_by_name("line-num", start_iter, end_iter)
+
