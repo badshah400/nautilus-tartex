@@ -10,6 +10,8 @@
 - Show Copy to clipboard button overlaid on output messages area in dialog box
 - Add simple search and highlight functionality to dialog box, triggered either
     by clicking search button or simply starting to type in search terms
+- Add toast overlay message for the edge case where the error log file may have
+    been deleted after the dialog is launched, causing "Open Log" button to fail
 
 ### Fixed
 
