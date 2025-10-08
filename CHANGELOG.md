@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0 [2025-10-09]
+
 ### Added
 
 - Show dialog box with tartex output and logs when archiving fails
