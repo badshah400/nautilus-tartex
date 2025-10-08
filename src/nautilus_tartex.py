@@ -90,7 +90,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         return []
 
     def _run_tartex_process(
-        self, file_obj: Nautilus.FileInfo, n: Notify.Notification
+        self,
+        file_obj: Nautilus.FileInfo,
+        n: Notify.Notification,
+        app: Gtk.Application
     ):
         """
         Runs the blocking tartex process in a separate thread.
@@ -142,7 +145,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 None,  # No stdin
                 None,  # Cancellable (None)
                 self._on_tartex_complete,  # Gio.AsyncReadyCallback function
-                (file_obj, n),  # data to pass to the callback
+                (file_obj, n, app),  # data to pass to the callback
             )
 
         except GLib.Error as err:
@@ -166,8 +169,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     ):
         """Callback func to run upon tartex completion"""
 
-        file_obj, notif = params
+        file_obj, notif, app = params
         success, stdout, stderr = proc.communicate_utf8_finish(res)
+        if app:
+            app.unmark_busy()
         exit_code = proc.get_exit_status()
 
         if exit_code:
@@ -234,7 +239,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
         notif.show()
-        self._run_tartex_process(file_obj, notif)
+        default_app = Gtk.Application.get_default()
+        if default_app:
+            default_app.mark_busy()
+        self._run_tartex_process(file_obj, notif, default_app)
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another"""
