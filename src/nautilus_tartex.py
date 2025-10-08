@@ -6,6 +6,7 @@
 import os
 import re
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -13,14 +14,14 @@ from pathlib import Path
 # If this fails, the script will not be loaded by Nautilus,
 # which is the desired behavior for non-GNOME environments.
 try:
-    import gi  # type: ignore[import-untyped]
+    import gi
 
     gi.require_version("Adw", "1")
     gi.require_version("Gtk", "4.0")
     gi.require_version("Nautilus", "4.1")
     gi.require_version("Notify", "0.7")
     gi.require_version("Pango", "1.0")
-    from gi.repository import (  # type: ignore[import-untyped]
+    from gi.repository import (  # type: ignore [attr-defined]
         Adw,
         GLib,
         GObject,
@@ -353,7 +354,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         copy_overlay = Gtk.Overlay()
         copy_overlay.add_overlay(copy_button)
-        copy_overlay.set_child(scrolled_box)
+        toast_widget = Adw.ToastOverlay.new()
+        toast_widget.set_child(scrolled_box)
+        copy_overlay.set_child(toast_widget)
 
         box1.append(copy_overlay)
 
@@ -367,10 +370,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             acc_color = default_adw_style.get_accent_color()
             highlight_back = acc_color.to_rgba()
             highlight_back.alpha = 0.3
-            highlight_tag.set_property(
-                "background-rgba",
-                highlight_back
-            )
+            highlight_tag.set_property("background-rgba", highlight_back)
         else:
             highlight_tag.set_property(
                 "background", "yellow" if is_dark_theme else "cyan"
@@ -396,7 +396,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             header_log_button.connect(
                 "clicked",
                 lambda _: GLib.idle_add(
-                    self._open_log_file, log_path
+                    self._open_log_file, (log_path, toast_widget)
                 )
             )
 
@@ -479,12 +479,25 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog.present(parent_window or application)
         return False
 
-    def _open_log_file(self, log_path):
+    def _open_log_file(self, data: tuple[str, Adw.ToastOverlay]):
+        log_path = data[0]
         log_file = Gio.File.new_for_path(log_path)
-        Gio.AppInfo.launch_default_for_uri(
-            log_file.get_uri(),
-            None,  # LaunchContext (not needed here)
-        )
+
+        toast: Adw.ToastOverlay = data[1]
+        try:
+            Gio.AppInfo.launch_default_for_uri(
+                log_file.get_uri(),
+                None,  # LaunchContext (not needed here)
+            )
+
+        except GLib.GError as err:
+            if err.domain == "g-io-error-quark":
+                log_msg = f"File not found: {log_file.get_basename()}"
+                print(log_msg, file=sys.stderr)
+                toast_msg = Adw.Toast.new(log_msg)
+                toast_msg.set_timeout(5)
+                toast.add_toast(toast_msg)
+
 
     def _markup_text(
         self,
