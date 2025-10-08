@@ -5,8 +5,9 @@
 ### Added
 
 - Show dialog box with tartex output and logs when archiving fails
-- Show an "Open Log" button when archiving fails due to latexmk error
-- Show Copy to clipboard button overlaid on output messages area
+- Show an "Open Log" button on dialog window when archiving fails due to latexmk
+    error
+- Show Copy to clipboard button overlaid on output messages area in dialog box
 - Add simple search and highlight functionality to dialog box, triggerred either
     by clicking search button or simply starting to type a search term
 
