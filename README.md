@@ -16,7 +16,7 @@ Right click on the main `.tex` or `.fls` file in a LaTeX project and select
 #### Pre-requisites ####
 
 The command line utility [`tartex`](https://pypi.org/project/tartex/) version
-`0.10.4` or higher must be installed and in `PATH`.
+`0.11.0` or higher must be installed and in `PATH`.
 
 `nautilus-tartex` depends on the following libraries and their Python bindings
 exposed via
