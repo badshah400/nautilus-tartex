@@ -22,9 +22,11 @@ The command line utility [`tartex`](https://pypi.org/project/tartex/) version
 exposed via
 [`gobject-introspection`](https://developer.gnome.org/documentation/guidelines/programming/introspection.html):
 
+* `libadwaita-1.0`
 * `gtk-4.0`
 * `glib-2.0`
 * `libnotify >= 0.7.0`
+* `pango`
 * [`nautilus-python`](https://gitlab.gnome.org/GNOME/nautilus-python)
 
 Additionally, [`meson`](https://mesonbuild.com/) is recommended for installing,
@@ -36,7 +38,7 @@ you may simply copy over the
 `nautilus-python` extensions directory, typically at
 `$XDG_DATA_HOME/nautilus-python/extensions/`.
 
-#### Meson based installation ####
+#### Install using `meson` ####
 
 Download and extract a
 [release](https://github.com/badshah400/nautilus-tartex/releases) tarball. `cd`

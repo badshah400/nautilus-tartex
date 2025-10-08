@@ -9,12 +9,14 @@ python = import('python')
 python.find_installation('python3',
   modules: [
         'gi',
+        'gi.repository.Adw',
         'gi.repository.GLib',
         'gi.repository.GObject',
         'gi.repository.Gio',
         'gi.repository.Gtk',
         'gi.repository.Nautilus',
         'gi.repository.Notify',
+        'gi.repository.Pango',
   ],
 )
 
