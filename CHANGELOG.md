@@ -15,6 +15,7 @@
 
 - Set environment variable "COLUMNS" to 132 for consistent line wrapping and for
     only really long lines
+- *Note*: `tartex >= 0.11.0` is now required.
 
 ## [0.0.2] 2025-10-01
 
