@@ -6,9 +6,11 @@ import fileinput
 import re
 import sys
 from pathlib import Path
+from datetime import date
 
 MESON = Path(".") / "meson.build"
 SRC = Path(".") / "src" / "nautilus_tartex.py"
+CHANGELOG = Path(".") / "CHANGELOG.md"
 
 
 def print_usage():
@@ -57,7 +59,7 @@ def set_version(ver: str):
         for line in fileinput.input(
             SRC, mode="r", inplace=True, backup=".bak"
         ):
-            new_line, _ = re.subn(
+            new_line = re.sub(
                 r"(__version__\s*=\s*).+$", rf'\1"{new_ver!s}"', line
             )
             print(new_line, end="")
@@ -67,12 +69,22 @@ def set_version(ver: str):
         for line in fileinput.input(
             MESON, mode="r", inplace=True, backup=".bak"
         ):
-            new_line, _ = re.subn(
+            new_line = re.sub(
                 r"^(\s*version\s*:\s*).+,$", rf"\1'{new_ver!s}',", line
             )
             print(new_line, end="")
 
         fileinput.close()
+
+        for line in fileinput.input(
+            CHANGELOG, mode="r", inplace=True, backup=".bak"
+        ):
+            new_line = re.sub(
+                r"^## Unreleased.*$",
+                rf"## {new_ver!s} [{date.isoformat(date.today())}]",
+                line,
+            )
+            print(new_line, end="")
 
     except Exception as err:
         raise err
