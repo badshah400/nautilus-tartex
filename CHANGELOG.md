@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Added
+
+- Show dialog box with tartex output and logs when archiving fails
+- Show an "Open Log" button when archiving fails due to latexmk error
+- Show Copy to clipboard button overlaid on output messages area
+- Add simple search and highlight functionality to dialog box, triggerred either
+    by clicking search button or simply starting to type a search term
+
+### Fixed
+
+- Set environment variable "COLUMNS" to 132 for consistent line wrapping and for
+    only really long lines
+
 ## [0.0.2] 2025-10-01
 
 ### Added
