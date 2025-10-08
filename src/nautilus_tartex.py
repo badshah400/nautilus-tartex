@@ -469,7 +469,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         search_entry.set_hexpand(True)
         search_entry.connect("search-changed", _on_search_text_changed)
         header_search_bar.set_child(search_entry)
-        header_search_bar.set_key_capture_widget(text_view)
+        header_search_bar.set_key_capture_widget(dialog)
         header_search_bar.connect_entry(search_entry)  # Allows using the ESC key to exit search mode
 
         content.add_top_bar(header_bar)
