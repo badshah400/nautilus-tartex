@@ -145,7 +145,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 None,  # No stdin
                 None,  # Cancellable (None)
                 self._on_tartex_complete,  # Gio.AsyncReadyCallback function
-                (file_obj, n, app),  # data to pass to the callback
+                (app, file_obj, n),  # data to pass to the callback
             )
 
         except GLib.Error as err:
@@ -169,7 +169,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     ):
         """Callback func to run upon tartex completion"""
 
-        file_obj, notif, app = params
+        app, file_obj, notif = params
         success, stdout, stderr = proc.communicate_utf8_finish(res)
         if app:
             app.unmark_busy()
@@ -187,9 +187,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.timeout_add(
                 0,
                 self._show_error_dialog,
+                app,
                 file_obj,
                 full_error_output,
-                exit_code
+                exit_code,
             )
         else:
             re_summary = re.compile(r"^Summary:\s(.*)$", re.MULTILINE)
@@ -239,10 +240,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
         notif.show()
-        default_app = Gtk.Application.get_default()
-        if default_app:
-            default_app.mark_busy()
-        self._run_tartex_process(file_obj, notif, default_app)
+        app = Gtk.Application.get_default()
+        if app:
+            app.mark_busy()
+        self._run_tartex_process(file_obj, notif, app)
 
     def _notify_send(self, head: str, msg: str, n: Notify.Notification):
         """Send notification at end of process one way or another"""
@@ -253,7 +254,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         return False
 
     def _show_error_dialog(
-            self, dir_path: str, error_details: str, exit_code: int
+        self,
+        application: Gtk.Application,
+        dir_path: str,
+        error_details: str,
+        exit_code: int
     ) -> bool:
         """
         Shows a modal dialog with full error details, using a GTK4 layout.
@@ -266,8 +271,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             5: "tarball creation",
         }
 
-        # Get the active application instance if possible
-        application: Gtk.Application = Gtk.Application.get_default()
         parent_window = None
         if application:
             # Attempt to get the active window (likely the Nautilus window)
