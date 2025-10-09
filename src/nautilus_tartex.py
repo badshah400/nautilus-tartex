@@ -89,6 +89,30 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     ) -> list[Nautilus.MenuItem]:
         return []
 
+    def on_tartex_activate(self, menu_item, file_obj):
+        """
+        Method is called when the user clicks the menu item. Sends a
+        notification and call the function to run tartex
+        """
+        notif = Notify.Notification.new(
+            "TarTeX",
+            "⏳ Archive creation started (running in background)",
+        )
+        notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
+        notif.show()
+        app = Gtk.Application.get_default()
+        if app:
+            app.mark_busy()
+        self._run_tartex_process(file_obj, notif, app)
+
+    def _notify_send(self, head: str, msg: str, n: Notify.Notification):
+        """Send notification at end of process one way or another"""
+        n.update(head, msg)
+        n.set_urgency(Notify.Urgency.NORMAL)  # remove persistence
+        n.set_timeout(Notify.EXPIRES_DEFAULT)
+        n.show()
+        return False
+
     def _run_tartex_process(
         self,
         file_obj: Nautilus.FileInfo,
@@ -228,30 +252,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         for _f in files:
             if not rec_man.add_item(_f):
                 print(f"Error: Failed to add {_f} to recent manager.")
-
-    def on_tartex_activate(self, menu_item, file_obj):
-        """
-        Method is called when the user clicks the menu item. Sends a
-        notification and call the function to run tartex
-        """
-        notif = Notify.Notification.new(
-            "TarTeX",
-            "⏳ Archive creation started (running in background)",
-        )
-        notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
-        notif.show()
-        app = Gtk.Application.get_default()
-        if app:
-            app.mark_busy()
-        self._run_tartex_process(file_obj, notif, app)
-
-    def _notify_send(self, head: str, msg: str, n: Notify.Notification):
-        """Send notification at end of process one way or another"""
-        n.update(head, msg)
-        n.set_urgency(Notify.Urgency.NORMAL)  # remove persistence
-        n.set_timeout(Notify.EXPIRES_DEFAULT)
-        n.show()
-        return False
 
     def _show_error_dialog(
         self,
@@ -490,26 +490,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog.present(parent_window or application)
         return False
 
-    def _open_log_file(self, data: tuple[str, Adw.ToastOverlay]):
-        log_path = data[0]
-        log_file = Gio.File.new_for_path(log_path)
-
-        toast: Adw.ToastOverlay = data[1]
-        try:
-            Gio.AppInfo.launch_default_for_uri(
-                log_file.get_uri(),
-                None,  # LaunchContext (not needed here)
-            )
-
-        except GLib.GError as err:
-            if err.domain == "g-io-error-quark":
-                log_msg = f"File not found: {log_file.get_basename()}"
-                print(log_msg, file=sys.stderr)
-                toast_msg = Adw.Toast.new(log_msg)
-                toast_msg.set_timeout(5)
-                toast.add_toast(toast_msg)
-
-
     def _markup_text(
         self,
         text_buffer: Gtk.TextBuffer,
@@ -592,4 +572,23 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             start_iter = text_buffer.get_iter_at_offset(match.start())
             end_iter = text_buffer.get_iter_at_offset(match.end())
             text_buffer.apply_tag_by_name("line-num", start_iter, end_iter)
+
+    def _open_log_file(self, data: tuple[str, Adw.ToastOverlay]):
+        log_path = data[0]
+        log_file = Gio.File.new_for_path(log_path)
+
+        toast: Adw.ToastOverlay = data[1]
+        try:
+            Gio.AppInfo.launch_default_for_uri(
+                log_file.get_uri(),
+                None,  # LaunchContext (not needed here)
+            )
+
+        except GLib.GError as err:
+            if err.domain == "g-io-error-quark":
+                log_msg = f"File not found: {log_file.get_basename()}"
+                print(log_msg, file=sys.stderr)
+                toast_msg = Adw.Toast.new(log_msg)
+                toast_msg.set_timeout(5)
+                toast.add_toast(toast_msg)
 
