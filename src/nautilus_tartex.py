@@ -37,6 +37,7 @@ except ImportError:
 __appname__ = "nautilus-tartex"
 __version__ = "0.2.0.dev0"
 
+
 class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     """
     This extension provides a right-click menu item in Nautilus
@@ -117,7 +118,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         self,
         file_obj: Nautilus.FileInfo,
         n: Notify.Notification,
-        app: Gtk.Application
+        app: Gtk.Application,
     ):
         """
         Runs the blocking tartex process in a separate thread.
@@ -161,8 +162,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         try:
             tartex_proc = Gio.SubprocessLauncher.new(
-                Gio.SubprocessFlags.STDOUT_PIPE |
-                Gio.SubprocessFlags.STDERR_PIPE
+                Gio.SubprocessFlags.STDOUT_PIPE
+                | Gio.SubprocessFlags.STDERR_PIPE
             )
             process = tartex_proc.spawnv(cmd)
             process.communicate_utf8_async(
@@ -177,7 +178,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 0,
                 self._notify_send,
                 "TarTeX Error",
-                f"🚨 Failed to launch command: {err}"
+                f"🚨 Failed to launch command: {err}",
             )
 
         except Exception as e:
@@ -185,7 +186,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 0,
                 self._notify_send,
                 "TarTeX Error",
-                f"🚫 An unknown error occurred: {e}"
+                f"🚫 An unknown error occurred: {e}",
             )
 
     def _on_tartex_complete(
@@ -234,12 +235,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             output_file = GLib.build_filenamev(
                 [
                     file_obj.get_parent_location().get_path(),
-                    success_msg.split()[1]
+                    success_msg.split()[1],
                 ]
             )
             GLib.idle_add(
                 self._update_recent,
-                [file_obj.get_uri(), GLib.filename_to_uri(output_file)]
+                [file_obj.get_uri(), GLib.filename_to_uri(output_file)],
             )
 
     def _update_recent(self, files: list[str]):
@@ -258,7 +259,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         application: Gtk.Application,
         dir_path: str,
         error_details: str,
-        exit_code: int
+        exit_code: int,
     ) -> bool:
         """
         Shows a modal dialog with full error details, using a GTK4 layout.
@@ -284,9 +285,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog.set_child(content)
 
         BOX1_MARGIN = 12
-        box1 = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=24
-        )
+        box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
         box1.set_hexpand(True)
         box1.set_vexpand(True)
         box1.set_halign(Gtk.Align.FILL)
@@ -296,9 +295,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         box1.set_margin_start(BOX1_MARGIN)
         content.set_content(box1)
 
-        box2 = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=12
-        )
+        box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         BOX2_MARGIN = 6
         box2.set_halign(Gtk.Align.FILL)
         box2.set_margin_start(BOX2_MARGIN)
@@ -354,14 +351,16 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             "clicked",
             lambda _: GLib.idle_add(
                 text_view.get_clipboard().set, error_details
-            )
+            ),
         )
 
         copy_button.set_halign(Gtk.Align.END)
         copy_button.set_valign(Gtk.Align.START)
         copy_button.set_size_request(32, 32)
         copy_button.set_margin_top(12)
-        copy_button.set_margin_end(16)  # a bit more margin, for scrollbar space
+        copy_button.set_margin_end(
+            16
+        )  # a bit more margin, for scrollbar space
 
         copy_overlay = Gtk.Overlay()
         copy_overlay.add_overlay(copy_button)
@@ -396,7 +395,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
 
-        if exit_code == 4:  # latexmk err, log file saved; add "open log" button
+        if (
+            exit_code == 4
+        ):  # latexmk err, log file saved; add "open log" button
             log_filename = "tartex_compile_error.log"
             log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
             header_log_button = Gtk.Button.new_with_mnemonic("_Open Log")
@@ -408,16 +409,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 "clicked",
                 lambda _: GLib.idle_add(
                     self._open_log_file, (log_path, toast_widget)
-                )
+                ),
             )
 
         header_close_button = Gtk.Button.new_with_label("Close")
         header_close_button.add_css_class("destructive-action")
         header_bar.pack_end(header_close_button)
-        header_close_button.connect(
-            "clicked",
-            lambda _: dialog.close()
-        )
+        header_close_button.connect("clicked", lambda _: dialog.close())
 
         # search logic helper function
         def _on_search_text_changed(search_entry, *args):
@@ -452,7 +450,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     match_index + len(search_query)
                 )
 
-                text_buffer.apply_tag(highlight_tag, start_match_iter, end_match_iter)
+                text_buffer.apply_tag(
+                    highlight_tag, start_match_iter, end_match_iter
+                )
                 offset = match_index + len(search_query)
 
         # header searchbar
@@ -467,7 +467,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         def _on_search_click(btn):
             search_mode = header_search_bar.get_search_mode()
             header_search_bar.set_search_mode(not search_mode)
-            if not search_mode: # If search mode is being activated (was False, now True)
+            if (
+                not search_mode
+            ):  # If search mode is being activated (was False, now True)
                 search_entry.grab_focus()
             else:
                 # When closing the search bar, clear text and reset highlights
@@ -481,11 +483,15 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         search_entry.connect("search-changed", _on_search_text_changed)
         header_search_bar.set_child(search_entry)
         header_search_bar.set_key_capture_widget(dialog)
-        header_search_bar.connect_entry(search_entry)  # Allows using the ESC key to exit search mode
+        header_search_bar.connect_entry(
+            search_entry
+        )  # Allows using the ESC key to exit search mode
 
         content.add_top_bar(header_bar)
         content.add_top_bar(header_search_bar)
-        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)  # nicer for text-rich content
+        content.set_top_bar_style(
+            Adw.ToolbarStyle.RAISED
+        )  # nicer for text-rich content
 
         dialog.present(parent_window or application)
         return False
@@ -515,7 +521,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         error_pattern = re.compile(
             r"^(Error|FATAL|Critical) (?P<err1>.*)(?:\r\n\s|\n\s)?"
             r"(?P<err2>.*)?",
-            re.IGNORECASE | re.MULTILINE
+            re.IGNORECASE | re.MULTILINE,
         )
 
         # Apply ERROR tags
@@ -529,7 +535,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 "error-highlight", start_iter, end_iter
             )
             if match.group("err2"):
-                start_iter = text_buffer.get_iter_at_offset(match.start("err2"))
+                start_iter = text_buffer.get_iter_at_offset(
+                    match.start("err2")
+                )
                 end_iter = text_buffer.get_iter_at_offset(match.end("err2"))
             text_buffer.apply_tag_by_name(
                 "error-highlight", start_iter, end_iter
@@ -553,7 +561,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             start_iter = text_buffer.get_iter_at_offset(match.start())
             end_iter = text_buffer.get_iter_at_offset(match.end())
             text_buffer.apply_tag_by_name("line-spacing", start_iter, end_iter)
-
 
         # highlight line numbers (line XX or l.XX) using accent if possible
         if acc_color:
@@ -591,4 +598,3 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 toast_msg = Adw.Toast.new(log_msg)
                 toast_msg.set_timeout(5)
                 toast.add_toast(toast_msg)
-
