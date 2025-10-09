@@ -252,7 +252,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         rec_man = Gtk.RecentManager.get_default()
         for _f in files:
             if not rec_man.add_item(_f):
-                print(f"Error: Failed to add {_f} to recent manager.")
+                print(f"Error: {__appname__}: Failed to add {_f} to recent manager.")
 
     def _show_error_dialog(
         self,
@@ -594,7 +594,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         except GLib.GError as err:
             if err.domain == "g-io-error-quark":
                 log_msg = f"File not found: {log_file.get_basename()}"
-                print(log_msg, file=sys.stderr)
+                print(f"{__appname__}: ERROR: {log_msg}", file=sys.stderr)
                 toast_msg = Adw.Toast.new(log_msg)
                 toast_msg.set_timeout(5)
                 toast.add_toast(toast_msg)
