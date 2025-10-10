@@ -358,11 +358,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         copy_button.set_valign(Gtk.Align.START)
         copy_button.set_size_request(32, 32)
         copy_button.set_margin_top(12)
-        copy_button.set_margin_end(
-            16
-        )  # a bit more margin, for scrollbar space
+        copy_button.set_margin_end(16)  # more margin, for scrollbar space
 
-        copy_overlay = Gtk.Overlay()
+        copy_overlay = Gtk.Overlay.new()
         copy_overlay.add_overlay(copy_button)
         toast_widget = Adw.ToastOverlay.new()
         toast_widget.set_child(scrolled_box)
