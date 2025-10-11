@@ -416,10 +416,30 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 ),
             )
 
+
+        def _toggle_errors(_btn: Gtk.ToggleButton):
+            err_filter = re.compile(r"^(?:ERROR\s).*$", re.MULTILINE)
+            if _btn.get_active():
+                new_msg = ""
+                for _e in err_filter.findall(error_details):
+                    new_msg = f"{new_msg}{_e}\n"
+                text_buffer.set_text(new_msg)
+            else:
+                text_buffer.set_text(error_details)
+
+            self._markup_text(
+                text_buffer, tag_table, acc_color, is_dark_theme
+            )
+
+        header_error_button = Gtk.ToggleButton.new_with_label("Errors")
+        header_error_button.connect("clicked", _toggle_errors)
+
         header_close_button = Gtk.Button.new_with_label("Close")
         header_close_button.add_css_class("destructive-action")
-        header_bar.pack_end(header_close_button)
         header_close_button.connect("clicked", lambda _: dialog.close())
+
+        header_bar.pack_end(header_close_button)
+        header_bar.pack_end(header_error_button)
 
         # search logic helper function
         def _on_search_text_changed(search_entry, *args):
