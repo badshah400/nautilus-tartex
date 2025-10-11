@@ -279,7 +279,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         dialog = Adw.Dialog.new()
         dialog.set_title("TarTeX error")
-        dialog.set_follows_content_size(True)
+        dialog.set_content_height(450)
+        dialog.set_content_width(900)
+        dialog.set_follows_content_size(False)
 
         content = Adw.ToolbarView()
         dialog.set_child(content)
@@ -319,8 +321,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box = Gtk.ScrolledWindow()
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
-        scrolled_box.set_min_content_height(200)
-        scrolled_box.set_max_content_height(600)
+        scrolled_box.set_max_content_height(800)
         scrolled_box.set_min_content_width(900)
         scrolled_box.set_max_content_width(1600)
         scrolled_box.set_propagate_natural_height(True)
