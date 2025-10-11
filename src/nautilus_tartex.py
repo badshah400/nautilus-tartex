@@ -279,7 +279,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         dialog = Adw.Dialog.new()
         dialog.set_title("TarTeX error")
-        dialog.set_content_height(450)
+        dialog.set_content_height(500)
         dialog.set_content_width(900)
         dialog.set_follows_content_size(False)
 
