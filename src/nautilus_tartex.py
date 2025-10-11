@@ -287,14 +287,13 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog.set_child(content)
 
         BOX1_MARGIN = 12
-        box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
+        box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         box1.set_hexpand(True)
         box1.set_vexpand(True)
         box1.set_halign(Gtk.Align.FILL)
-        box1.set_margin_bottom(BOX1_MARGIN)
-        box1.set_margin_top(BOX1_MARGIN)
         box1.set_margin_end(BOX1_MARGIN)
         box1.set_margin_start(BOX1_MARGIN)
+        box1.set_margin_top(BOX1_MARGIN)
         content.set_content(box1)
 
         box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
@@ -302,6 +301,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         box2.set_halign(Gtk.Align.FILL)
         box2.set_margin_start(BOX2_MARGIN)
         box2.set_margin_end(BOX2_MARGIN)
+        box2.set_margin_top(BOX2_MARGIN)
+        box2.set_margin_bottom(BOX2_MARGIN)
         box1.append(box2)
         error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
         error_icon.set_icon_size(Gtk.IconSize.LARGE)
@@ -332,10 +333,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         text_buffer.set_text(error_details)
         text_view.set_buffer(text_buffer)
         scrolled_box.set_child(text_view)
-        text_view.set_margin_end(BOX2_MARGIN)
-        text_view.set_margin_start(BOX2_MARGIN)
-        text_view.set_left_margin(BOX2_MARGIN)
-        text_view.set_right_margin(BOX2_MARGIN)
+        text_view.set_left_margin(BOX1_MARGIN)
+        text_view.set_right_margin(BOX1_MARGIN)
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
         text_view.set_monospace(True)
@@ -364,7 +363,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         copy_button.set_valign(Gtk.Align.START)
         copy_button.set_size_request(32, 32)
         copy_button.set_margin_top(12)
-        copy_button.set_margin_end(16)  # more margin, for scrollbar space
+        copy_button.set_margin_end(20)  # more space for right scrollbar
 
         copy_overlay = Gtk.Overlay.new()
         copy_overlay.add_overlay(copy_button)
