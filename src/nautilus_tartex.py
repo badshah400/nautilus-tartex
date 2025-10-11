@@ -350,7 +350,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         copy_button.connect(
             "clicked",
             lambda _: GLib.idle_add(
-                text_view.get_clipboard().set, error_details
+                text_view.get_clipboard().set,
+                text_buffer.get_text(
+                    text_buffer.get_start_iter(),
+                    text_buffer.get_end_iter(),
+                    False,
+                )
             ),
         )
 
