@@ -417,29 +417,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             )
 
 
-        def _toggle_errors(_btn: Gtk.ToggleButton):
-            err_filter = re.compile(r"^(?:ERROR\s).*$", re.MULTILINE)
-            if _btn.get_active():
-                new_msg = ""
-                for _e in err_filter.findall(error_details):
-                    new_msg = f"{new_msg}{_e}\n"
-                text_buffer.set_text(new_msg)
-            else:
-                text_buffer.set_text(error_details)
-
-            self._markup_text(
-                text_buffer, tag_table, acc_color, is_dark_theme
-            )
-
-        header_error_button = Gtk.ToggleButton.new_with_label("Errors")
-        header_error_button.connect("clicked", _toggle_errors)
-
         header_close_button = Gtk.Button.new_with_label("Close")
         header_close_button.add_css_class("destructive-action")
         header_close_button.connect("clicked", lambda _: dialog.close())
 
         header_bar.pack_end(header_close_button)
-        header_bar.pack_end(header_error_button)
 
         # search logic helper function
         def _on_search_text_changed(search_entry, *args):
@@ -508,15 +490,55 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         search_entry.connect("search-changed", _on_search_text_changed)
         header_search_bar.set_child(search_entry)
         header_search_bar.set_key_capture_widget(dialog)
-        header_search_bar.connect_entry(
-            search_entry
-        )  # Allows using the ESC key to exit search mode
+        header_search_bar.connect_entry(search_entry)  # ESC key to exit search
 
         content.add_top_bar(header_bar)
         content.add_top_bar(header_search_bar)
-        content.set_top_bar_style(
-            Adw.ToolbarStyle.RAISED
-        )  # nicer for text-rich content
+        # headerbars with labelled buttons look better with the "RAISED" style
+        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)
+
+        def _filter_msg(_btn: Gtk.ToggleButton, lead: str = ""):
+            if not lead:
+                return
+            lead_filter = re.compile(rf"^(?:{lead}\s).*$", re.MULTILINE)
+            if _btn.get_active():
+                new_msg = ""
+                for _msg in lead_filter.findall(error_details):
+                    new_msg += f"{_msg}\n"
+                text_buffer.set_text(new_msg)
+            else:
+                text_buffer.set_text(error_details)
+
+            self._markup_text(
+                text_buffer, tag_table, acc_color, is_dark_theme
+            )
+            if header_search_bar.get_search_mode():
+                search_entry.grab_focus()
+                _on_search_text_changed(search_entry)
+
+        header_error_button = Gtk.ToggleButton.new_with_label("Errors")
+        header_error_button.connect("toggled", _filter_msg, "ERROR")
+        header_warn_button = Gtk.ToggleButton.new_with_label("Warnings")
+        header_warn_button.connect("toggled", _filter_msg, "WARNING")
+        header_all_button = Gtk.ToggleButton.new_with_label("All")
+        header_all_button.connect("toggled", _filter_msg)
+        header_all_button.set_active(True)
+        header_error_button.set_group(header_all_button)
+        header_warn_button.set_group(header_all_button)
+
+        filter_bar = Gtk.ActionBar.new()
+        filter_bar.set_revealed(True)
+        filter_box = Gtk.Box.new(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=2
+        )
+
+        for _btn in [
+                header_all_button, header_error_button, header_warn_button
+        ]:
+            filter_box.append(_btn)
+
+        filter_bar.set_center_widget(filter_box)
+        content.add_bottom_bar(filter_bar)
 
         dialog.present(parent_window or application)
         return False
