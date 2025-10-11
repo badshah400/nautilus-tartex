@@ -455,7 +455,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 return
 
             search_query_lower = search_query.lower()
-            text_to_search_lower = error_details.lower()
+            text_to_search_lower = text_buffer.get_text(
+                text_buffer.get_start_iter(),
+                text_buffer.get_end_iter(),
+            ).lower()
 
             # Iterate through text and apply new highlights
             offset = 0
@@ -491,9 +494,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         def _on_search_click(btn):
             search_mode = header_search_bar.get_search_mode()
             header_search_bar.set_search_mode(not search_mode)
-            if (
-                not search_mode
-            ):  # If search mode is being activated (was False, now True)
+            if (not search_mode):  # search activated (search_mode: False)
                 search_entry.grab_focus()
             else:
                 # When closing the search bar, clear text and reset highlights
