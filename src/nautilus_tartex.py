@@ -496,12 +496,23 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # headerbars with labelled buttons look better with the "RAISED" style
         content.set_top_bar_style(Adw.ToolbarStyle.RAISED)
 
-        def _filter_msg(_btn: Gtk.ToggleButton, lead: str = ""):
-            if not lead:
-                return
-            lead_filter = re.compile(rf"^(?:{lead}\s).*$", re.MULTILINE)
-            if _btn.get_active():
-                new_msg = ""
+        def _filter_msg(_tgrp: Adw.ToggleGroup, pspec):
+            lead_dict = {
+                "All": "", "Errors": "ERROR", "Warnings": "WARNING"
+            }
+            active_toggle = _tgrp.get_active_name()
+            lead_filter = re.compile(
+                rf"^(?:{lead_dict[active_toggle]}\s).*$",
+                re.MULTILINE,
+            )
+            new_msg = ""
+            if active_toggle == "All":
+                text_buffer.set_text(error_details)
+            elif active_toggle == "Errors":
+                for _msg in lead_filter.findall(error_details):
+                    new_msg += f"{_msg}\n"
+                text_buffer.set_text(new_msg)
+            elif active_toggle == "Warnings":
                 for _msg in lead_filter.findall(error_details):
                     new_msg += f"{_msg}\n"
                 text_buffer.set_text(new_msg)
@@ -515,28 +526,26 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 search_entry.grab_focus()
                 _on_search_text_changed(search_entry)
 
-        header_error_button = Gtk.ToggleButton.new_with_label("Errors")
-        header_error_button.connect("toggled", _filter_msg, "ERROR")
-        header_warn_button = Gtk.ToggleButton.new_with_label("Warnings")
-        header_warn_button.connect("toggled", _filter_msg, "WARNING")
-        header_all_button = Gtk.ToggleButton.new_with_label("All")
-        header_all_button.connect("toggled", _filter_msg)
-        header_all_button.set_active(True)
-        header_error_button.set_group(header_all_button)
-        header_warn_button.set_group(header_all_button)
+        toggle_error = Adw.Toggle.new()
+        toggle_error.set_label("Errors")
+        toggle_warn = Adw.Toggle.new()
+        toggle_warn.set_label("Warnings")
+        toggle_all = Adw.Toggle.new()
+        toggle_all.set_label("All")
+        toggle_all.set_enabled(True)
+
+        toggle_group = Adw.ToggleGroup.new()
+        toggle_group.add_css_class("round")
+        for _togg in [toggle_all, toggle_error, toggle_warn]:
+            _togg.set_name(_togg.get_label())
+            toggle_group.add(_togg)
+        toggle_group.set_active_name(toggle_all.get_name())
+        toggle_group.connect("notify::active", _filter_msg)
 
         filter_bar = Gtk.ActionBar.new()
         filter_bar.set_revealed(True)
-        filter_box = Gtk.Box.new(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=2
-        )
+        filter_bar.set_center_widget(toggle_group)
 
-        for _btn in [
-                header_all_button, header_error_button, header_warn_button
-        ]:
-            filter_box.append(_btn)
-
-        filter_bar.set_center_widget(filter_box)
         content.add_bottom_bar(filter_bar)
 
         dialog.present(parent_window or application)
