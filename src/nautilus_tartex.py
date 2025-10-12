@@ -335,8 +335,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box.set_child(text_view)
         text_view.set_left_margin(BOX1_MARGIN)
         text_view.set_right_margin(BOX1_MARGIN)
-        text_view.set_margin_bottom(BOX2_MARGIN)
-        text_view.set_margin_end(BOX2_MARGIN)
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
         text_view.set_monospace(True)
