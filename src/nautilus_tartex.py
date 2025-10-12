@@ -498,7 +498,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         def _filter_msg(_tgrp: Adw.ToggleGroup, pspec):
             lead_dict = {
-                "All": "", "Errors": "ERROR", "Warnings": "WARNING"
+                "All": "", "Errors": "CRITICAL|ERROR", "Warnings": "WARNING"
             }
             active_toggle = _tgrp.get_active_name()
             lead_filter = re.compile(
