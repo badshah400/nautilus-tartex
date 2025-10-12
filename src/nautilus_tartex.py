@@ -542,11 +542,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         toggle_group.set_active_name(toggle_all.get_name())
         toggle_group.connect("notify::active", _filter_msg)
 
-        filter_bar = Gtk.ActionBar.new()
-        filter_bar.set_revealed(True)
-        filter_bar.set_center_widget(toggle_group)
-
-        content.add_bottom_bar(filter_bar)
+        box2.append(toggle_group)
+        box1.set_margin_bottom(BOX1_MARGIN)
 
         dialog.present(parent_window or application)
         return False
