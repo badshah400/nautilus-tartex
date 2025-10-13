@@ -284,7 +284,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         dialog = Adw.Dialog.new()
         dialog.set_title("TarTeX error")
         dialog.set_size_request(800, 600)
-        dialog.set_follows_content_size(False)
+        dialog.set_follows_content_size(True)
 
         content = Adw.ToolbarView()
         dialog.set_child(content)
@@ -327,22 +327,26 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
         scrolled_box.set_min_content_height(600)
-        scrolled_box.set_min_content_width(800)
+        scrolled_box.set_min_content_width(600)
         scrolled_box.set_max_content_width(1600)
-        scrolled_box.set_propagate_natural_height(True)
+        scrolled_box.set_propagate_natural_height(False)
         scrolled_box.set_propagate_natural_width(True)
 
+        TEXTVIEW_MARGIN = 6
         text_view = Gtk.TextView()
         text_buffer = Gtk.TextBuffer()
         text_buffer.set_text(error_details)
         text_view.set_buffer(text_buffer)
-        scrolled_box.set_child(text_view)
-        text_view.set_left_margin(BOX1_MARGIN)
-        text_view.set_right_margin(BOX1_MARGIN)
+        text_view.set_margin_bottom(TEXTVIEW_MARGIN)
+        text_view.set_margin_end(TEXTVIEW_MARGIN)
+        text_view.set_margin_start(TEXTVIEW_MARGIN)
+        text_view.set_left_margin(TEXTVIEW_MARGIN)
+        text_view.set_right_margin(TEXTVIEW_MARGIN)
         text_view.set_editable(False)
         text_view.set_cursor_visible(False)
         text_view.set_monospace(True)
         text_view.set_wrap_mode(Gtk.WrapMode.NONE)
+        scrolled_box.set_child(text_view)
 
         # Copy to clipboard button
         copy_button = Gtk.Button.new_from_icon_name("edit-copy-symbolic")
@@ -402,9 +406,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         header_bar = Adw.HeaderBar()
         header_bar.set_show_end_title_buttons(False)
 
-        if (
-            exit_code == 4
-        ):  # latexmk err, log file saved; add "open log" button
+        if (exit_code == 4):
+            # latexmk err, log file saved; add "open log" button
+
             log_filename = "tartex_compile_error.log"
             log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
             header_log_button = Gtk.Button.new_with_mnemonic("_Open Log")
@@ -419,16 +423,15 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 ),
             )
 
-
         header_close_button = Gtk.Button.new_with_label("Close")
         header_close_button.add_css_class("destructive-action")
         header_close_button.connect("clicked", lambda _: dialog.close())
 
         header_bar.pack_end(header_close_button)
 
-        # search logic helper function
         def _on_search_text_changed(search_entry, *args):
             """Performs case-insensitive search and highlights matches."""
+
             search_query = search_entry.get_text().strip()
 
             # Remove existing highlights from the entire buffer
