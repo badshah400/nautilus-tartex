@@ -316,8 +316,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             label=f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
             use_markup=True,
             halign=Gtk.Align.START,
-            wrap=True,
+            wrap=False,
         )
+        err_summary.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
         err_summary.set_hexpand(True)
         box2.append(err_summary)
 
