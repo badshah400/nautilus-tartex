@@ -18,7 +18,7 @@ try:
 
     gi.require_version("Adw", "1")
     gi.require_version("Gtk", "4.0")
-    gi.require_version("Nautilus", "4.1")
+    gi.require_version("Nautilus", "4.0")
     gi.require_version("Notify", "0.7")
     gi.require_version("Pango", "1.0")
     from gi.repository import (  # type: ignore [attr-defined]
