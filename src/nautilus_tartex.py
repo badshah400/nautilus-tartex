@@ -281,37 +281,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             5: "tarball creation",
         }
 
-        win_width, win_height = parent_window.get_default_size()
-        if not win_width:
-            win_width = 600
-        if not win_height:
-            win_height = 400
-
-        # padding from win size has to be large for win headerbar space, etc.
-        size_padding = 200
-
-        # To determine min size, we use relatively large values of width/height
-        # for comparison since window sizes smaller than the comparison value
-        # will anyway determine the minimum sizes. For window sizes larger than
-        # the comparison values, this ensures the dialog box is not unwieldily
-        # large.
-        #
-        # "... - 1" ensures when size_min and size_max are both determined by
-        # the window size, the former is at least a pixel less than size_max
-        box_size_min = (
-            min(win_width - size_padding - 1, 900),
-            min(win_height - size_padding - 1, 800),
-        )
-        # max size must always be determined by the window size, minus padding
-        box_size_max = (win_width - size_padding, win_height - size_padding)
-
-        # a cut-off for when to start dropping elements from dialog box to
-        # accommodate the decreasing width/height
-        size_limit = (500, 400)
-
         dialog = Adw.Dialog.new()
         dialog.set_title("TarTeX error")
-        dialog.set_size_request(*box_size_min)
+        dialog.set_size_request(800, 600)
         dialog.set_follows_content_size(True)
 
         content = Adw.ToolbarView()
@@ -334,14 +306,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         box2.set_margin_end(BOX2_MARGIN)
         box2.set_margin_top(BOX2_MARGIN)
         box2.set_margin_bottom(BOX2_MARGIN)
-        if box_size_min[1] > size_limit[1]:
-            box1.append(box2)
+        box1.append(box2)
         error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
         error_icon.set_icon_size(Gtk.IconSize.LARGE)
         error_icon.set_valign(Gtk.Align.START)
         error_icon.add_css_class("error")
-        if box_size_min[0] > (size_limit[0] + 50):
-            box2.append(error_icon)
+        box2.append(error_icon)
 
         err_summary = Gtk.Label(
             label=f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
@@ -351,20 +321,14 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         err_summary.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
         err_summary.set_hexpand(True)
-        if box_size_min[0] > size_limit[0]:
-            box2.append(err_summary)
+        box2.append(err_summary)
 
         scrolled_box = Gtk.ScrolledWindow()
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
-        scrolled_box.set_min_content_width(box_size_min[0])
-        scrolled_box.set_min_content_height(box_size_min[1])
-        scrolled_box.set_max_content_width(box_size_max[0])
-        scrolled_box.set_max_content_height(box_size_max[1])
-        # Don't propagate natural height: it causes the dialog height to jump
-        # around when alternating between different output msg filters if the
-        # number of lines in the text_buffer changes significantly, providing
-        # a rather poor user experience
+        scrolled_box.set_min_content_height(600)
+        scrolled_box.set_min_content_width(600)
+        scrolled_box.set_max_content_width(1600)
         scrolled_box.set_propagate_natural_height(False)
         scrolled_box.set_propagate_natural_width(True)
 
@@ -440,6 +404,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         self._markup_text(text_buffer, tag_table, acc_color, is_dark_theme)
 
         header_bar = Adw.HeaderBar()
+        header_bar.set_show_end_title_buttons(False)
 
         if (exit_code == 4):
             # latexmk err, log file saved; add "open log" button
@@ -458,14 +423,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 ),
             )
 
-        if box_size_min[0] > size_limit[0]:
-            header_bar.set_show_end_title_buttons(False)
-            header_close_button = Gtk.Button.new_with_label("Close")
-            header_close_button.add_css_class("destructive-action")
-            header_close_button.connect("clicked", lambda _: dialog.close())
-            header_bar.pack_end(header_close_button)
-        else:
-            header_bar.set_show_end_title_buttons(True)
+        header_close_button = Gtk.Button.new_with_label("Close")
+        header_close_button.add_css_class("destructive-action")
+        header_close_button.connect("clicked", lambda _: dialog.close())
+
+        header_bar.pack_end(header_close_button)
 
         def _on_search_text_changed(search_entry, *args):
             """Performs case-insensitive search and highlights matches."""
@@ -586,9 +548,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             toggle_group.add(_togg)
         toggle_group.set_active_name(toggle_all.get_name())
         toggle_group.connect("notify::active", _filter_msg)
-        if box_size_min[0] < size_limit[0]:
-            toggle_group.set_hexpand(True)
-            toggle_group.set_halign(Gtk.Align.FILL)
 
         box2.append(toggle_group)
         box1.set_margin_bottom(BOX1_MARGIN)
