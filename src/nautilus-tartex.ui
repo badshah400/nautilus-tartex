@@ -162,6 +162,7 @@
         <child type="top">
           <object class="GtkSearchBar" id="search_bar">
             <property name="search-mode-enabled">false</property>
+            <property name="key-capture-widget">error_dialog</property>
             <child>
               <object class="GtkSearchEntry" id="search_entry">
                 <property name="hexpand">true</property>

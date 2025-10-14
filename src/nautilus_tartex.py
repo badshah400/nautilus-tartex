@@ -449,10 +449,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 _on_search_text_changed(search_entry)
 
         header_search_button.connect("clicked", _on_search_click)
-
         search_entry.connect("search-changed", _on_search_text_changed)
-
-        header_search_bar.set_key_capture_widget(dialog)
         header_search_bar.connect_entry(search_entry)  # ESC key to exit search
 
         def _filter_msg(_tgrp: Adw.ToggleGroup, pspec):
