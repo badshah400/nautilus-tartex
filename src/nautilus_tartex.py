@@ -281,9 +281,33 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             5: "tarball creation",
         }
 
+        win_width, win_height = parent_window.get_default_size()
+        if not win_width:
+            win_width = 600
+        if not win_height:
+            win_height = 400
+
+        # padding from win size has to be large for win headerbar space, etc.
+        size_padding = 200
+
+        # To determine min size, we use relatively large values of width/height
+        # for comparison since window sizes smaller than the comparison value
+        # will anyway determine the minimum sizes. For window sizes larger than
+        # the comparison values, this ensures the dialog box is not unwieldily
+        # large.
+        #
+        # "... - 1" ensures when size_min and size_max are both determined by
+        # the window size, the former is at least a pixel less than size_max
+        box_size_min = (
+            min(win_width - size_padding - 1, 900),
+            min(win_height - size_padding - 1, 800),
+        )
+        # max size must always be determined by the window size, minus padding
+        box_size_max = (win_width - size_padding, win_height - size_padding)
+
         dialog = Adw.Dialog.new()
         dialog.set_title("TarTeX error")
-        dialog.set_size_request(800, 600)
+        dialog.set_size_request(*box_size_min)
         dialog.set_follows_content_size(True)
 
         content = Adw.ToolbarView()
@@ -326,9 +350,14 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         scrolled_box = Gtk.ScrolledWindow()
         scrolled_box.set_hexpand(True)
         scrolled_box.set_vexpand(True)
-        scrolled_box.set_min_content_height(600)
-        scrolled_box.set_min_content_width(600)
-        scrolled_box.set_max_content_width(1600)
+        scrolled_box.set_min_content_width(box_size_min[0])
+        scrolled_box.set_min_content_height(box_size_min[1])
+        scrolled_box.set_max_content_width(box_size_max[0])
+        scrolled_box.set_max_content_height(box_size_max[1])
+        # Don't propagate natural height: it causes the dialog height to jump
+        # around when alternating between different output msg filters if the
+        # number of lines in the text_buffer changes significantly, providing
+        # a rather poor user experience
         scrolled_box.set_propagate_natural_height(False)
         scrolled_box.set_propagate_natural_width(True)
 
