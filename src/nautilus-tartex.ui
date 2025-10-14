@@ -1,0 +1,175 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.96.1 -->
+<interface>
+  <!-- interface-name nautilus-tartex.ui -->
+  <requires lib="gtk" version="4.18"/>
+  <requires lib="libadwaita" version="1.7"/>
+  <object class="AdwDialog" id="error_dialog">
+    <property name="title">TarTeX error</property>
+    <child>
+      <object class="AdwToolbarView" id="toolbar_view">
+        <property name="top-bar-style">raised</property>
+        <property name="content">
+          <object class="GtkBox" id="main_box">
+            <property name="halign">fill</property>
+            <property name="hexpand">true</property>
+            <property name="margin-bottom">12</property>
+            <property name="margin-end">12</property>
+            <property name="margin-start">12</property>
+            <property name="margin-top">12</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">12</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="GtkBox" id="summary_box">
+                <property name="halign">fill</property>
+                <property name="margin-bottom">6</property>
+                <property name="margin-end">6</property>
+                <property name="margin-start">6</property>
+                <property name="margin-top">6</property>
+                <property name="orientation">horizontal</property>
+                <property name="spacing">12</property>
+                <property name="visible">true</property>
+                <child>
+                  <object class="GtkImage" id="error_icon">
+                    <property name="css-classes">error</property>
+                    <property name="icon-name">dialog-error-symbolic</property>
+                    <property name="icon-size">large</property>
+                    <property name="valign">start</property>
+                    <property name="visible">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="err_summary_label">
+                    <property name="ellipsize">middle</property>
+                    <property name="halign">start</property>
+                    <property name="hexpand">true</property>
+                    <property name="label" translatable="yes">Error Summary Placeholder</property>
+                    <property name="use-markup">true</property>
+                    <property name="wrap">false</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwToggleGroup" id="toggle_group">
+                    <property name="active-name">All</property>
+                    <property name="css-classes">round</property>
+                    <property name="homogeneous">false</property>
+                    <child>
+                      <object class="AdwToggle" id="toggle_all">
+                        <property name="enabled">true</property>
+                        <property name="label" translatable="yes">All</property>
+                        <property name="name">All</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwToggle" id="toggle_error">
+                        <property name="label" translatable="yes">Errors</property>
+                        <property name="name">Errors</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwToggle" id="toggle_warn">
+                        <property name="label" translatable="yes">Warnings</property>
+                        <property name="name">Warnings</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkOverlay" id="copy_overlay">
+                <child>
+                  <object class="AdwToastOverlay" id="toast_overlay">
+                    <child>
+                      <object class="GtkScrolledWindow" id="scrolled_window">
+                        <property name="hexpand">true</property>
+                        <!-- Don't propagate natural height: it causes the
+                             dialog height to jump around when alternating
+                             between different output msg filters if the number
+                             of lines in the text_buffer changes significantly,
+                             providing a rather poor user experience
+                        -->
+                        <property name="propagate-natural-height">false</property>
+                        <property name="propagate-natural-width">true</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkTextView" id="text_view">
+                            <property name="cursor-visible">false</property>
+                            <property name="editable">false</property>
+                            <property name="left-margin">6</property>
+                            <property name="margin-bottom">6</property>
+                            <property name="margin-end">6</property>
+                            <property name="margin-start">6</property>
+                            <property name="monospace">true</property>
+                            <property name="right-margin">6</property>
+                            <property name="wrap-mode">none</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child type="overlay">
+                  <object class="GtkButton" id="copy_button">
+                    <style>
+                      <class name="suggested-action" />
+                      <class name="raised" />
+                      <class name="circular" />
+                    </style>
+                    <property name="halign">end</property>
+                    <property name="height-request">32</property>
+                    <property name="icon-name">edit-copy-symbolic</property>
+                    <property name="margin-end">20</property>
+                    <property name="margin-top">12</property>
+                    <property name="opacity">0.8</property>
+                    <property name="tooltip-text"
+                              translatable="yes">Copy Output Text</property>
+                    <property name="valign">start</property>
+                    <property name="width-request">32</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </property>
+        <child type="top">
+          <object class="AdwHeaderBar" id="header_bar">
+            <property name="show-end-title-buttons">false</property>
+            <property name="show-start-title-buttons">false</property>
+            <child type="start">
+              <object class="GtkButton" id="log_button">
+                <property name="label" translatable="yes">_Open Log</property>
+                <property name="use-underline">true</property>
+                <property name="visible">false</property>
+              </object>
+            </child>
+            <child type="start">
+              <object class="GtkButton" id="search_button">
+                <property name="icon-name">edit-find-symbolic</property>
+              </object>
+            </child>
+            <child type="end">
+              <object class="GtkButton" id="close_button">
+                <property name="css-classes">destructive-action</property>
+                <property name="label" translatable="yes">_Close</property>
+                <property name="visible">true</property>
+                <property name="use-underline">true</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child type="top">
+          <object class="GtkSearchBar" id="search_bar">
+            <property name="search-mode-enabled">false</property>
+            <child>
+              <object class="GtkSearchEntry" id="search_entry">
+                <property name="hexpand">true</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

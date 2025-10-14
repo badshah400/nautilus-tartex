@@ -34,3 +34,4 @@ datadir = get_option('datadir')
 extension_dir = prefix / datadir / files_app + '-python' / 'extensions'
 
 install_data('src/nautilus_tartex.py', install_dir: extension_dir)
+install_data('src/nautilus-tartex.ui', install_dir: extension_dir)

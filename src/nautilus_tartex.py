@@ -281,6 +281,30 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             5: "tarball creation",
         }
 
+        # --- GTK BUILDER: Load and Retrieve Widgets ---
+        builder = Gtk.Builder()
+        try:
+            builder.add_from_file(
+                str(Path(__file__).parent / "nautilus-tartex.ui")
+            )
+        except Exception as e:
+            print(f"FATAL ERROR: Could not load UI file: {e}")
+            return False
+
+        # Retrieve widgets by ID (matching the UI file IDs)
+        dialog: Adw.Dialog = builder.get_object("error_dialog")  # type: ignore[assignment]
+        err_summary: Gtk.Label = builder.get_object("err_summary_label")  # type: ignore[assignment]
+        scrolled_box: Gtk.ScrolledWindow = builder.get_object("scrolled_window")  # type: ignore[assignment]
+        text_view: Gtk.TextView = builder.get_object("text_view")  # type: ignore[assignment]
+        copy_button: Gtk.Button = builder.get_object("copy_button")  # type: ignore[assignment]
+        log_button: Gtk.Button = builder.get_object("log_button")  # type: ignore[assignment]
+        close_button: Gtk.Button = builder.get_object("close_button")  # type: ignore[assignment]
+        header_search_button: Gtk.Button = builder.get_object("search_button")  # type: ignore[assignment]
+        header_search_bar: Gtk.SearchBar = builder.get_object("search_bar")  # type: ignore[assignment]
+        search_entry: Gtk.SearchEntry = builder.get_object("search_entry")  # type: ignore[assignment]
+        toggle_group: Adw.ToggleGroup = builder.get_object("toggle_group")  # type: ignore[assignment]
+        toast_widget: Adw.ToastOverlay = builder.get_object("toast_overlay")  # type: ignore[assignment]
+
         win_width, win_height = parent_window.get_default_size()
         if not win_width:
             win_width = 600
@@ -305,85 +329,22 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # max size must always be determined by the window size, minus padding
         box_size_max = (win_width - size_padding, win_height - size_padding)
 
-        dialog = Adw.Dialog.new()
-        dialog.set_title("TarTeX error")
         dialog.set_size_request(*box_size_min)
-        dialog.set_follows_content_size(True)
 
-        content = Adw.ToolbarView()
-        dialog.set_child(content)
-
-        BOX1_MARGIN = 12
-        box1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        box1.set_hexpand(True)
-        box1.set_vexpand(True)
-        box1.set_halign(Gtk.Align.FILL)
-        box1.set_margin_end(BOX1_MARGIN)
-        box1.set_margin_start(BOX1_MARGIN)
-        box1.set_margin_top(BOX1_MARGIN)
-        content.set_content(box1)
-
-        box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        BOX2_MARGIN = 6
-        box2.set_halign(Gtk.Align.FILL)
-        box2.set_margin_start(BOX2_MARGIN)
-        box2.set_margin_end(BOX2_MARGIN)
-        box2.set_margin_top(BOX2_MARGIN)
-        box2.set_margin_bottom(BOX2_MARGIN)
-        box1.append(box2)
-        error_icon = Gtk.Image.new_from_icon_name("dialog-error-symbolic")
-        error_icon.set_icon_size(Gtk.IconSize.LARGE)
-        error_icon.set_valign(Gtk.Align.START)
-        error_icon.add_css_class("error")
-        box2.append(error_icon)
-
-        err_summary = Gtk.Label(
-            label=f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
-            use_markup=True,
-            halign=Gtk.Align.START,
-            wrap=False,
+        err_summary.set_markup(
+            f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
         )
-        err_summary.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
-        err_summary.set_hexpand(True)
-        box2.append(err_summary)
 
-        scrolled_box = Gtk.ScrolledWindow()
-        scrolled_box.set_hexpand(True)
-        scrolled_box.set_vexpand(True)
         scrolled_box.set_min_content_width(box_size_min[0])
         scrolled_box.set_min_content_height(box_size_min[1])
         scrolled_box.set_max_content_width(box_size_max[0])
         scrolled_box.set_max_content_height(box_size_max[1])
-        # Don't propagate natural height: it causes the dialog height to jump
-        # around when alternating between different output msg filters if the
-        # number of lines in the text_buffer changes significantly, providing
-        # a rather poor user experience
-        scrolled_box.set_propagate_natural_height(False)
-        scrolled_box.set_propagate_natural_width(True)
 
-        TEXTVIEW_MARGIN = 6
-        text_view = Gtk.TextView()
         text_buffer = Gtk.TextBuffer()
         text_buffer.set_text(error_details)
         text_view.set_buffer(text_buffer)
-        text_view.set_margin_bottom(TEXTVIEW_MARGIN)
-        text_view.set_margin_end(TEXTVIEW_MARGIN)
-        text_view.set_margin_start(TEXTVIEW_MARGIN)
-        text_view.set_left_margin(TEXTVIEW_MARGIN)
-        text_view.set_right_margin(TEXTVIEW_MARGIN)
-        text_view.set_editable(False)
-        text_view.set_cursor_visible(False)
-        text_view.set_monospace(True)
-        text_view.set_wrap_mode(Gtk.WrapMode.NONE)
-        scrolled_box.set_child(text_view)
 
         # Copy to clipboard button
-        copy_button = Gtk.Button.new_from_icon_name("edit-copy-symbolic")
-        copy_button.set_tooltip_text("Copy Output Text")
-        copy_button.add_css_class("raised")
-        copy_button.add_css_class("circular")
-        copy_button.add_css_class("suggested-action")
-        copy_button.set_opacity(0.8)
         copy_button.connect(
             "clicked",
             lambda _: GLib.idle_add(
@@ -395,20 +356,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 )
             ),
         )
-
-        copy_button.set_halign(Gtk.Align.END)
-        copy_button.set_valign(Gtk.Align.START)
-        copy_button.set_size_request(32, 32)
-        copy_button.set_margin_top(12)
-        copy_button.set_margin_end(20)  # more space for right scrollbar
-
-        copy_overlay = Gtk.Overlay.new()
-        copy_overlay.add_overlay(copy_button)
-        toast_widget = Adw.ToastOverlay.new()
-        toast_widget.set_child(scrolled_box)
-        copy_overlay.set_child(toast_widget)
-
-        box1.append(copy_overlay)
 
         tag_table = text_buffer.get_tag_table()
 
@@ -432,31 +379,23 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         self._markup_text(text_buffer, tag_table, acc_color, is_dark_theme)
 
-        header_bar = Adw.HeaderBar()
-        header_bar.set_show_end_title_buttons(False)
-
         if (exit_code == 4):
             # latexmk err, log file saved; add "open log" button
 
             log_filename = "tartex_compile_error.log"
             log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
-            header_log_button = Gtk.Button.new_with_mnemonic("_Open Log")
-            header_log_button.set_tooltip_markup(
+            log_button.set_tooltip_markup(
                 f"Open <b>{log_filename}</b> in Text Editor"
             )
-            header_bar.pack_start(header_log_button)
-            header_log_button.connect(
+            log_button.set_visible(True)
+            log_button.connect(
                 "clicked",
                 lambda _: GLib.idle_add(
                     self._open_log_file, (log_path, toast_widget)
                 ),
             )
 
-        header_close_button = Gtk.Button.new_with_label("Close")
-        header_close_button.add_css_class("destructive-action")
-        header_close_button.connect("clicked", lambda _: dialog.close())
-
-        header_bar.pack_end(header_close_button)
+        close_button.connect("clicked", lambda _: dialog.close())
 
         def _on_search_text_changed(search_entry, *args):
             """Performs case-insensitive search and highlights matches."""
@@ -499,15 +438,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 )
                 offset = match_index + len(search_query)
 
-        # header searchbar
-        header_search_button = Gtk.Button.new_from_icon_name(
-            "edit-find-symbolic"
-        )
-        header_bar.pack_start(header_search_button)
-
-        header_search_bar = Gtk.SearchBar()
-        header_search_bar.set_search_mode(False)
-
         def _on_search_click(btn):
             search_mode = header_search_bar.get_search_mode()
             header_search_bar.set_search_mode(not search_mode)
@@ -520,17 +450,10 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         header_search_button.connect("clicked", _on_search_click)
 
-        search_entry = Gtk.SearchEntry()
-        search_entry.set_hexpand(True)
         search_entry.connect("search-changed", _on_search_text_changed)
-        header_search_bar.set_child(search_entry)
+
         header_search_bar.set_key_capture_widget(dialog)
         header_search_bar.connect_entry(search_entry)  # ESC key to exit search
-
-        content.add_top_bar(header_bar)
-        content.add_top_bar(header_search_bar)
-        # headerbars with labelled buttons look better with the "RAISED" style
-        content.set_top_bar_style(Adw.ToolbarStyle.RAISED)
 
         def _filter_msg(_tgrp: Adw.ToggleGroup, pspec):
             lead_dict = {
@@ -562,24 +485,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 search_entry.grab_focus()
                 _on_search_text_changed(search_entry)
 
-        toggle_error = Adw.Toggle.new()
-        toggle_error.set_label("Errors")
-        toggle_warn = Adw.Toggle.new()
-        toggle_warn.set_label("Warnings")
-        toggle_all = Adw.Toggle.new()
-        toggle_all.set_label("All")
-        toggle_all.set_enabled(True)
-
-        toggle_group = Adw.ToggleGroup.new()
-        toggle_group.add_css_class("round")
-        for _togg in [toggle_all, toggle_error, toggle_warn]:
-            _togg.set_name(_togg.get_label())
-            toggle_group.add(_togg)
-        toggle_group.set_active_name(toggle_all.get_name())
         toggle_group.connect("notify::active", _filter_msg)
-
-        box2.append(toggle_group)
-        box1.set_margin_bottom(BOX1_MARGIN)
 
         dialog.present(parent_window)
         return False
