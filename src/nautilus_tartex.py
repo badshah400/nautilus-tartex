@@ -326,8 +326,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             min(win_width - size_padding - 1, 900),
             min(win_height - size_padding - 1, 800),
         )
-        # max size must always be determined by the window size, minus padding
-        box_size_max = (win_width - size_padding, win_height - size_padding)
 
         dialog.set_size_request(*box_size_min)
 
@@ -335,8 +333,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
         )
 
-        scrolled_box.set_max_content_width(box_size_max[0])
-        scrolled_box.set_max_content_height(box_size_max[1])
+        # max size must always be determined by the window size, minus padding
+        scrolled_box.set_max_content_width(win_width - size_padding)
+        scrolled_box.set_max_content_height(win_height - size_padding)
 
         text_buffer = Gtk.TextBuffer()
         text_buffer.set_text(error_details)
