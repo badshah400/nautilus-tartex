@@ -52,12 +52,13 @@ exposed via
 * [`nautilus-python`](https://gitlab.gnome.org/GNOME/nautilus-python)
 
 Additionally, [`meson`](https://mesonbuild.com/) is recommended for installing,
-because, before installing, it checks whether all requirements are satisfied.
+because it checks whether all requirements are satisfied before installing.
 
 However, if you are sure of all pre-requisites being installed in your system,
 you may simply copy over the
-[`src/nautilus_tartex.py`](./src/nautilus_tartex.py) file into your
-`nautilus-python` extensions directory, typically at
+[`src/nautilus_tartex.py`](./src/nautilus_tartex.py) and
+[`src/nautilus-tartex.ui`](./src/nautilus-tartex.ui)
+files into your `nautilus-python` extensions directory, typically at
 `$XDG_DATA_HOME/nautilus-python/extensions/`.
 
 #### Install using `meson` ####
