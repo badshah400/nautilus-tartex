@@ -33,8 +33,6 @@ when the error is due to LaTeX compilation failure, a button to open the full
 LaTeX compilation log. It also provides a toggle bar to optionally filter the
 output messages by errors or warnings.
 
-![error-dialog](./error-dialog.png)
-
 ### Installation ###
 
 #### Pre-requisites ####
@@ -46,7 +44,8 @@ The command line utility [`tartex`](https://pypi.org/project/tartex/) version
 exposed via
 [`gobject-introspection`](https://developer.gnome.org/documentation/guidelines/programming/introspection.html):
 
-* `libadwaita-1.0`* `gtk-4.0`
+* `libadwaita-1.0`
+* `gtk-4.0`
 * `glib-2.0`
 * `libnotify >= 0.7.0`
 * `pango`
