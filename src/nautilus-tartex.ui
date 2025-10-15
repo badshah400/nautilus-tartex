@@ -5,6 +5,21 @@
   <requires lib="gtk" version="4.18"/>
   <requires lib="libadwaita" version="1.7"/>
   <object class="AdwDialog" id="error_dialog">
+    <child>
+      <object class="AdwBreakpoint">
+        <condition>max-width: 360sp</condition>
+        <setter object="error_icon" property="visible">false</setter>
+        <setter object="summary_label" property="halign">fill</setter>
+        <setter object="summary_box" property="orientation">vertical</setter>
+        <setter object="log_button" property="icon-name">document-open-symbolic</setter>
+        <!-- On narrow screens, the dialog pops up almost like a bottom sheet
+             and the RAISED look of the headerbar does not match the style
+        -->
+        <setter object="toolbar_view" property="top-bar-style">flat</setter>
+        <!-- Vertically centred toggle_group looks better with same-sized toggles -->
+        <setter object="toggle_group" property="homogeneous">true</setter>
+      </object>
+    </child>
     <property name="title">TarTeX error</property>
     <child>
       <object class="AdwToolbarView" id="toolbar_view">
@@ -40,7 +55,7 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="err_summary_label">
+                  <object class="GtkLabel" id="summary_label">
                     <property name="ellipsize">middle</property>
                     <property name="halign">start</property>
                     <property name="hexpand">true</property>
@@ -155,6 +170,7 @@
                 <property name="label" translatable="yes">_Close</property>
                 <property name="visible">true</property>
                 <property name="use-underline">true</property>
+                <property name="can-shrink">true</property>
               </object>
             </child>
           </object>

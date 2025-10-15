@@ -293,7 +293,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         # Retrieve widgets by ID (matching the UI file IDs)
         dialog: Adw.Dialog = builder.get_object("error_dialog")  # type: ignore[assignment]
-        err_summary: Gtk.Label = builder.get_object("err_summary_label")  # type: ignore[assignment]
+        err_summary: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
         scrolled_box: Gtk.ScrolledWindow = builder.get_object("scrolled_window")  # type: ignore[assignment]
         text_view: Gtk.TextView = builder.get_object("text_view")  # type: ignore[assignment]
         copy_button: Gtk.Button = builder.get_object("copy_button")  # type: ignore[assignment]
@@ -312,7 +312,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             win_height = 400
 
         # padding from win size has to be large for win headerbar space, etc.
-        size_padding = 200
+        size_padding = 150
 
         # To determine min size, we use relatively large values of width/height
         # for comparison since window sizes smaller than the comparison value
@@ -335,8 +335,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
         )
 
-        scrolled_box.set_min_content_width(box_size_min[0])
-        scrolled_box.set_min_content_height(box_size_min[1])
         scrolled_box.set_max_content_width(box_size_max[0])
         scrolled_box.set_max_content_height(box_size_max[1])
 
