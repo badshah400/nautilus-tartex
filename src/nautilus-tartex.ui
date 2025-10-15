@@ -7,13 +7,14 @@
   <object class="AdwDialog" id="error_dialog">
     <child>
       <object class="AdwBreakpoint">
-        <condition>max-width: 360sp</condition>
+        <condition>max-width: 400sp</condition>
         <setter object="error_icon" property="visible">false</setter>
         <setter object="summary_label" property="halign">fill</setter>
         <setter object="summary_box" property="orientation">vertical</setter>
         <setter object="log_button" property="icon-name">document-open-symbolic</setter>
-        <!-- On narrow screens, the dialog pops up almost like a bottom sheet
-             and the RAISED look of the headerbar does not match the style
+        <setter object="close_button" property="icon-name">window-close-symbolic</setter>
+        <!-- On narrow screens, the dialog pops up as a bottom sheet and the
+             RAISED look of the headerbar does not match the style
         -->
         <setter object="toolbar_view" property="top-bar-style">flat</setter>
         <!-- Vertically centred toggle_group looks better with same-sized toggles -->
