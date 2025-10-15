@@ -1,15 +1,39 @@
 ## TarTeX context menu extension for nautilus ##
 
 `nautilus-tartex` is a context menu extension for the GNOME Files app,
-nautilus, to enable one-click tarball-ing of all files needed to compile your
-LaTeX project using [`tartex`](https://pypi.org/project/tartex/).
+nautilus, to enable one-click generation of tarball of all files needed to
+compile your LaTeX project using [`tartex`](https://pypi.org/project/tartex/).
 
 ### Usage ###
+
+*Note*: Only works on single file selections.
 
 Right click on the main `.tex` or `.fls` file in a LaTeX project and select
 "Create a TarTeX archive" from the context menu.
 
-*Note*: Only works on single file selections.
+When clicking on an `.fls` file, the input sources listed in this record file
+are directly added to the resulting tarball, named identically to the fls
+filename (sans extension) with a time-stamp appended to it. This naming scheme
+allows you to create and store snapshots of your TeX project as it evolves. Note
+that *no checks are made* as to whether the tarballed TeX project will compile
+when the trigger file is `.fls`.
+
+When clicking on a `.tex` file, the tarball procedure follows the usual tartex
+route of checking the cache, recompiling sources in a temporary directory if it
+is stale, and including the required sources detected from either the cache or
+logs from the re-compile.
+
+`nautilus-tartex` automatically routes tartex into the latter's
+[`git-rev` mode](https://github.com/badshah400/tartex?tab=readme-ov-file#usage)
+if it detects a `.git` directory inside the project.
+
+If tartex fails to create the archive, `nautilus-tartex` launches a dialog box
+relaying output messages from tartex. The dialog box offers basic searching and,
+when the error is due to LaTeX compilation failure, a button to open the full
+LaTeX compilation log. It also provides a toggle bar to optionally filter the
+output messages by errors or warnings.
+
+![error-dialog](./error-dialog.png)
 
 ### Installation ###
 
@@ -22,8 +46,7 @@ The command line utility [`tartex`](https://pypi.org/project/tartex/) version
 exposed via
 [`gobject-introspection`](https://developer.gnome.org/documentation/guidelines/programming/introspection.html):
 
-* `libadwaita-1.0`
-* `gtk-4.0`
+* `libadwaita-1.0`* `gtk-4.0`
 * `glib-2.0`
 * `libnotify >= 0.7.0`
 * `pango`
