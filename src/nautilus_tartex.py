@@ -105,9 +105,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
         notif.show()
         app = Gtk.Application.get_default()
-        parent_window = None
         if app:
-            # Attempt to get the active window (likely the Nautilus window)
+            # Get the active nautilus window
             win = app.get_active_window()
 
         if app:
@@ -529,7 +528,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # Error line may wrap into a second line (which will then start with
         # whitespace)
         error_pattern = re.compile(
-            r"^(Error|FATAL|Critical) (?P<err1>.*)(?:\r\n\s|\n\s)?"
+            r"^(error|fatal|critical) (?P<err1>.*)(?:\r\n\s|\n\s)?"
             r"(?P<err2>.*)?",
             re.IGNORECASE | re.MULTILINE,
         )
