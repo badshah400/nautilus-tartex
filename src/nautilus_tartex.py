@@ -292,7 +292,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         # Retrieve widgets by ID (matching the UI file IDs)
         dialog: Adw.Dialog = builder.get_object("error_dialog")  # type: ignore[assignment]
-        error_label: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
+        err_summary: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
         scrolled_box: Gtk.ScrolledWindow = builder.get_object(
             "scrolled_window"
         )  # type: ignore[assignment]
@@ -330,7 +330,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         dialog.set_size_request(*box_size_min)
 
-        error_label.set_markup(
+        err_summary.set_markup(
             f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
         )
 
@@ -521,12 +521,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         lnum_tag = Gtk.TextTag.new("line-num")
         lnum_tag.set_property("foreground", acc_color_standalone)
 
-        # underline code tags
-        code_tag = Gtk.TextTag.new("code")
-        code_tag.set_property("underline", Pango.Underline.SINGLE)
-
         for _tag in [
-            code_tag,
             error_tag,
             highlight_tag,
             info_tag,
@@ -582,9 +577,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         re_lnum = re.compile(r"(line |l\.)(\d+)")
         _apply_tag("line-num", re_lnum)
-
-        re_code = re.compile(r"\s`(\w+)`\s", re.MULTILINE)
-        _apply_tag("code", re_code)
 
     def _open_log_file(self, data: tuple[str, Adw.ToastOverlay]):
         log_path = data[0]
