@@ -558,26 +558,25 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 "error-highlight", start_iter, end_iter
             )
 
+        # helper func to apply tags
+        def _apply_tag(tag_name: str, patt: re.Pattern):
+            for match in patt.finditer(text):
+                start_iter = text_buffer.get_iter_at_offset(match.start())
+                end_iter = text_buffer.get_iter_at_offset(match.end())
+                text_buffer.apply_tag_by_name(tag_name, start_iter, end_iter)
+
         # INFO line tagging: lines may wrap into the next line, but wrapped line
         # starts with whitespace
         info_pattern = re.compile(
             r"^INFO .+(?:\r\n\s|\n\s)?.*", re.IGNORECASE | re.MULTILINE
         )
-        for match in info_pattern.finditer(text):
-            start_iter = text_buffer.get_iter_at_offset(match.start())
-            end_iter = text_buffer.get_iter_at_offset(match.end())
-            text_buffer.apply_tag_by_name("info-dim", start_iter, end_iter)
+        _apply_tag("info-dim", info_pattern)
 
-        for match in re.finditer(r"^\S", text, re.MULTILINE):
-            start_iter = text_buffer.get_iter_at_offset(match.start())
-            end_iter = text_buffer.get_iter_at_offset(match.end())
-            text_buffer.apply_tag_by_name("line-spacing", start_iter, end_iter)
+        lspace_pattern = re.compile(r"^\S", re.MULTILINE)
+        _apply_tag("line-spacing", lspace_pattern)
 
         re_lnum = re.compile(r"(line |l\.)(\d+)")
-        for match in re_lnum.finditer(text):
-            start_iter = text_buffer.get_iter_at_offset(match.start())
-            end_iter = text_buffer.get_iter_at_offset(match.end())
-            text_buffer.apply_tag_by_name("line-num", start_iter, end_iter)
+        _apply_tag("line-num", re_lnum)
 
     def _open_log_file(self, data: tuple[str, Adw.ToastOverlay]):
         log_path = data[0]
