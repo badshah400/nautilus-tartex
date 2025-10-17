@@ -129,9 +129,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         win: Gtk.Window,
     ):
         """
-        Runs the blocking tartex process in a separate thread.
-        This function handles the synchronous part and sends the final
-        notification.
+        Runs the blocking tartex process asynchronously.
         """
         parent_dir = file_obj.get_parent_location()
 
@@ -260,7 +258,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         rec_man = Gtk.RecentManager.get_default()
         for _f in files:
             if not rec_man.add_item(_f):
-                print(f"Error: {__appname__}: Failed to add {_f} to recent manager.")
+                print(
+                    f"Error: {__appname__}: Failed to add {_f} to recent manager."
+                )
 
     def _show_error_dialog(
         self,
@@ -293,7 +293,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # Retrieve widgets by ID (matching the UI file IDs)
         dialog: Adw.Dialog = builder.get_object("error_dialog")  # type: ignore[assignment]
         err_summary: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
-        scrolled_box: Gtk.ScrolledWindow = builder.get_object("scrolled_window")  # type: ignore[assignment]
+        scrolled_box: Gtk.ScrolledWindow = builder.get_object(
+            "scrolled_window"
+        )  # type: ignore[assignment]
         text_view: Gtk.TextView = builder.get_object("text_view")  # type: ignore[assignment]
         copy_button: Gtk.Button = builder.get_object("copy_button")  # type: ignore[assignment]
         log_button: Gtk.Button = builder.get_object("log_button")  # type: ignore[assignment]
@@ -349,7 +351,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     text_buffer.get_start_iter(),
                     text_buffer.get_end_iter(),
                     False,
-                )
+                ),
             ),
         )
 
@@ -375,7 +377,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         self._markup_text(text_buffer, tag_table, acc_color, is_dark_theme)
 
-        if (exit_code == 4):
+        if exit_code == 4:
             # latexmk err, log file saved; add "open log" button
 
             log_filename = "tartex_compile_error.log"
@@ -434,7 +436,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         def _on_search_click(btn):
             search_mode = header_search_bar.get_search_mode()
             header_search_bar.set_search_mode(not search_mode)
-            if (not search_mode):  # search activated (search_mode: False)
+            if not search_mode:  # search activated (search_mode: False)
                 search_entry.grab_focus()
             else:
                 # When closing the search bar, clear text and reset highlights
@@ -447,7 +449,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         def _filter_msg(_tgrp: Adw.ToggleGroup, pspec):
             lead_dict = {
-                "All": "", "Errors": "CRITICAL|ERROR", "Warnings": "WARNING"
+                "All": "",
+                "Errors": "CRITICAL|ERROR",
+                "Warnings": "WARNING",
             }
             active_toggle = _tgrp.get_active_name()
             lead_filter = re.compile(
@@ -468,9 +472,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             else:
                 text_buffer.set_text(error_details)
 
-            self._markup_text(
-                text_buffer, tag_table, acc_color, is_dark_theme
-            )
+            self._markup_text(text_buffer, tag_table, acc_color, is_dark_theme)
             if header_search_bar.get_search_mode():
                 search_entry.grab_focus()
                 _on_search_text_changed(search_entry)
@@ -520,7 +522,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         lnum_tag.set_property("foreground", acc_color_standalone)
 
         for _tag in [
-                error_tag, highlight_tag, info_tag, spacing_tag, lnum_tag
+            error_tag,
+            highlight_tag,
+            info_tag,
+            spacing_tag,
+            lnum_tag,
         ]:
             if not tag_table.lookup(_tag.get_property("name")):
                 tag_table.add(_tag)
