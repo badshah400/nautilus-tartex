@@ -1,7 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- Created with Cambalache 0.96.1 -->
 <interface>
-  <!-- interface-name nautilus-tartex.ui -->
   <requires lib="gtk" version="4.18"/>
   <requires lib="libadwaita" version="1.7"/>
   <object class="AdwDialog" id="error_dialog">
@@ -158,6 +156,7 @@
                 <property name="label" translatable="yes">_Open Log</property>
                 <property name="use-underline">true</property>
                 <property name="visible">false</property>
+                <property name="tooltip-markup">Open &lt;b&gt;LaTeX compile log&lt;/b&gt; in Text Editor</property>
               </object>
             </child>
             <child type="start">

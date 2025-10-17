@@ -381,9 +381,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
             log_filename = "tartex_compile_error.log"
             log_path = GLib.build_filenamev([f"{Path.cwd()!s}", log_filename])
-            log_button.set_tooltip_markup(
-                f"Open <b>{log_filename}</b> in Text Editor"
-            )
             log_button.set_visible(True)
             log_button.connect(
                 "clicked",
