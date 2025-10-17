@@ -273,7 +273,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         Shows a modal dialog with full error details, using a GTK4 layout.
         """
         err_dict: dict[int, str] = {
-            1: "unknown error",
+            1: "system error",
             2: "cache access",
             3: "git checkout",
             4: "LaTeX compilation",
