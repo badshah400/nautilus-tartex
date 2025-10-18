@@ -280,19 +280,18 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             5: "tarball creation",
         }
 
-        # --- GTK BUILDER: Load and Retrieve Widgets ---
         builder = Gtk.Builder()
         try:
             builder.add_from_file(
                 str(Path(__file__).parent / "nautilus-tartex.ui")
             )
         except Exception as e:
-            print(f"FATAL ERROR: Could not load UI file: {e}")
+            print(f"FATAL: Could not load UI file: {e}")
             return False
 
         # Retrieve widgets by ID (matching the UI file IDs)
         dialog: Adw.Dialog = builder.get_object("error_dialog")  # type: ignore[assignment]
-        err_summary: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
+        error_label: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
         scrolled_box: Gtk.ScrolledWindow = builder.get_object(
             "scrolled_window"
         )  # type: ignore[assignment]
@@ -330,7 +329,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         dialog.set_size_request(*box_size_min)
 
-        err_summary.set_markup(
+        error_label.set_markup(
             f"<b>TarTeX failed at {err_dict[exit_code]}</b>",
         )
 
