@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Improve logic for detection of whether to use tartex's `git-rev` workflow
+
 ## 0.2.0 [2025-10-17]
 
 ### Added
@@ -8,7 +14,7 @@
 - Add toggles to filter output message by error or warnings (or show all)
 - Filter out UI layout, property, and style elements into a GTK .ui XML file and use Gtk.Builder to refer to them in code
 
-### Fixes
+### Fixed
 
 - Lots of layout fixes for improved user experience
 - Fix dialog height jumping with content changes (message filtering, search-bar dropping down, etc.)
