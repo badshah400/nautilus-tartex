@@ -9,6 +9,7 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+from subprocess import run
 
 # Try to import the Nautilus and GObject libraries.
 # If this fails, the script will not be loaded by Nautilus,
@@ -147,23 +148,34 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         file_path = file_obj.get_location().get_path()
         file_name_stem = os.path.splitext(file_obj.get_name())[0]
 
-        use_git = (Path(parent_dir.get_path()) / ".git").is_dir()
-
-        # Generate a unique filename with a timestamp
-        timestamp = datetime.now().strftime(r"%Y%m%d_%H%M%S")
-        output_name = GLib.build_filenamev(
-            [parent_dir.get_path(), f"{file_name_stem}_{timestamp}.tar.gz"]
-        )
-
         cmd = [tartex_path, file_path, "-b", "-v", "-s"]
-        if use_git:
-            cmd += [
-                "--overwrite",
-                "--git-rev",
-                "--output",
-                parent_dir.get_path(),  # specify dir but allow default git tag
-            ]
-        else:  # use unique time-stamped output tar name
+
+        try:
+            git_cmd = shutil.which("git")
+            if git_cmd:
+                _ = run(
+                    [git_cmd, "rev-parse", "--git-dir"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                cmd += [
+                    "--overwrite",
+                    "--git-rev",
+                    "--output",
+                    parent_dir.get_path(),  # specify dir but use default
+                                            # tartex git-rev name for output
+                ]
+            else:
+                raise RuntimeError("unable to find git in PATH")
+
+        except Exception:
+            # Do not use git route but otherwise no problem
+            # Generate a unique filename with a timestamp
+            timestamp = datetime.now().strftime(r"%Y%m%d_%H%M%S")
+            output_name = GLib.build_filenamev(
+                [parent_dir.get_path(), f"{file_name_stem}_{timestamp}.tar.gz"]
+            )
             cmd += ["--output", output_name]
 
         try:
