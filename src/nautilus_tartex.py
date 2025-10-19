@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import sys
+import typing
 from datetime import datetime
 from pathlib import Path
 from subprocess import run
@@ -52,7 +53,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
     def __init__(self):
         # Set terminal width long enough that most tartex log messages do not
-        # have to wrap their lines. Also makes wrapping consistent and not
+        # have to wrap their lines.  Also makes wrapping consistent and not
         # dependent on the width of the console launching nautilus (or 80
         # when started from the desktop menus).
         os.environ["COLUMNS"] = "132"
@@ -163,7 +164,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     "--overwrite",
                     "--git-rev",
                     "--output",
-                    parent_dir.get_path(),  # specify dir but use default
+                    parent_dir.get_path(),  # Specify dir but use default
                                             # tartex git-rev name for output
                 ]
             else:
@@ -302,20 +303,42 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             return False
 
         # Retrieve widgets by ID (matching the UI file IDs)
-        dialog: Adw.Dialog = builder.get_object("error_dialog")  # type: ignore[assignment]
-        error_label: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
-        scrolled_box: Gtk.ScrolledWindow = builder.get_object(
-            "scrolled_window"
-        )  # type: ignore[assignment]
-        text_view: Gtk.TextView = builder.get_object("text_view")  # type: ignore[assignment]
-        copy_button: Gtk.Button = builder.get_object("copy_button")  # type: ignore[assignment]
-        log_button: Gtk.Button = builder.get_object("log_button")  # type: ignore[assignment]
-        close_button: Gtk.Button = builder.get_object("close_button")  # type: ignore[assignment]
-        header_search_button: Gtk.Button = builder.get_object("search_button")  # type: ignore[assignment]
-        header_search_bar: Gtk.SearchBar = builder.get_object("search_bar")  # type: ignore[assignment]
-        search_entry: Gtk.SearchEntry = builder.get_object("search_entry")  # type: ignore[assignment]
-        toggle_group: Adw.ToggleGroup = builder.get_object("toggle_group")  # type: ignore[assignment]
-        toast_widget: Adw.ToastOverlay = builder.get_object("toast_overlay")  # type: ignore[assignment]
+        dialog: Adw.Dialog = typing.cast(
+            Adw.Dialog, builder.get_object("error_dialog")
+        )
+        error_label: Gtk.Label = typing.cast(
+            Gtk.Label, builder.get_object("summary_label")
+        )
+        scrolled_box: Gtk.ScrolledWindow = typing.cast(
+            Gtk.ScrolledWindow, builder.get_object("scrolled_window")
+        )
+        text_view: Gtk.TextView = typing.cast(
+            Gtk.TextView, builder.get_object("text_view")
+        )
+        copy_button: Gtk.Button = typing.cast(
+            Gtk.Button, builder.get_object("copy_button")
+        )
+        log_button: Gtk.Button = typing.cast(
+            Gtk.Button, builder.get_object("log_button")
+        )
+        close_button: Gtk.Button = typing.cast(
+            Gtk.Button, builder.get_object("close_button")
+        )
+        header_search_button: Gtk.Button = typing.cast(
+            Gtk.Button, builder.get_object("search_button")
+        )
+        header_search_bar: Gtk.SearchBar = typing.cast(
+            Gtk.SearchBar, builder.get_object("search_bar")
+        )
+        search_entry: Gtk.SearchEntry = typing.cast(
+           Gtk.SearchEntry, builder.get_object("search_entry")
+        )
+        toggle_group: Adw.ToggleGroup = typing.cast(
+            Adw.ToggleGroup, builder.get_object("toggle_group")
+        )
+        toast_widget: Adw.ToastOverlay = typing.cast(
+            Adw.ToastOverlay, builder.get_object("toast_overlay")
+        )
 
         win_width, win_height = parent_window.get_default_size()
         if not win_width:
