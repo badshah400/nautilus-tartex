@@ -128,7 +128,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # Handler function for the action
         def handle_open_target(action, parameter):
             try:
-                app.open([Gio.File.new_for_uri(self._working_dir_uri),], "1")
+                app.open([Gio.File.new_for_uri(self._working_dir_uri),], "")
             except Exception as e:
                 print(f"Error launching file manager for URI: {e}")
 
