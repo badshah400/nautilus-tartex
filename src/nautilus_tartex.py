@@ -60,7 +60,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         os.environ["TERM"] = "dumb"  # suppress rich formatting
         GObject.GObject.__init__(self)
         self._open_dir_action: Union[Gio.SimpleAction, None] = None
-        self._working_dir_uri: str = ""
+        self._file_object: Union[Gio.File, None] = None
 
     def get_file_items(self, items):
         """
@@ -78,6 +78,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         if not file_obj.is_directory() and (
             file_obj.get_name().endswith((".tex", ".fls"))
         ):
+            self._file_object = file_obj.get_location()
             top_menu_item = Nautilus.MenuItem(
                 name="TartexNautilusExtension::CreateTarball",
                 label="Create TarTeX Archive",
@@ -106,18 +107,20 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             return
         win = app.get_active_window() if app else None
         if not self._open_dir_action:
-            self.setup_open_dir_action(app)
-        self._working_dir_uri = file_obj.get_parent_uri()
+            self.setup_notify_action(app)
 
+        notif_target = self._file_object.get_parent()
         notif = Gio.Notification.new("TarTeX")
-        notif.set_default_action("app.open-target")
+        notif.set_default_action_and_target(
+            "app.open-target", GLib.Variant.new_string(notif_target.get_uri())
+        )
         notif.set_body("⏳ Archive creation started (running in background)")
         notif.set_priority(Gio.NotificationPriority.URGENT)
         app.send_notification(self.NOTIFICATION_ID, notif)
         app.mark_busy()
         self._run_tartex_process(file_obj, notif, app, win)
 
-    def setup_open_dir_action(self, app: Gtk.Application):
+    def setup_notify_action(self, app: Gtk.Application):
         """
         Defines the 'open-target' action on the Nautilus application instance.
         This handler will open the URI passed as a parameter.
@@ -126,15 +129,29 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             return # Action is already set up, do nothing.
 
         # Handler function for the action
-        def handle_open_target(action, parameter):
+        def handle_open_target(
+            action: Gio.SimpleAction, param: GLib.Variant
+        ):
             try:
-                app.open([Gio.File.new_for_uri(self._working_dir_uri),], "")
+                tgt_uri = param.get_string()
+                nautilus_tgt = Gio.File.new_for_uri(tgt_uri)
+                if nautilus_tgt.query_file_type(
+                        Gio.FileQueryInfoFlags.NONE
+                ) == Gio.FileType.DIRECTORY:
+                    nautilus_cmd = ["nautilus", tgt_uri]
+                else:
+                    nautilus_cmd = ["nautilus", "--select", tgt_uri]
+                Gio.Subprocess.new(
+                    nautilus_cmd,
+                    Gio.SubprocessFlags.STDOUT_SILENCE
+                    | Gio.SubprocessFlags.STDERR_SILENCE
+                )
             except Exception as e:
                 print(f"Error launching file manager for URI: {e}")
 
         # signature 's' for a single string GVariant parameter (URI)
         self._open_dir_action = Gio.SimpleAction.new(
-            "open-target", None
+            "open-target", GLib.VariantType.new("s")
         )
         self._open_dir_action.connect("activate", handle_open_target)
 
@@ -279,18 +296,22 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 success_msg = (
                     f"Created TarTeX archive using {file_obj.get_name()}"
                 )
-            GLib.timeout_add(
-                0, self._notify_send, app, "TarTeX Success", success_msg, notif
-            )
-            output_file = GLib.build_filenamev(
+            output_file: Gio.File = Gio.File.new_build_filenamev(
                 [
                     file_obj.get_parent_location().get_path(),
                     success_msg.split()[1],
                 ]
             )
+            notif.set_default_action_and_target(
+                "app.open-target",
+                GLib.Variant.new_string(output_file.get_uri()),
+            )
+            GLib.timeout_add(
+                0, self._notify_send, app, "TarTeX Success", success_msg, notif
+            )
             GLib.idle_add(
                 self._update_recent,
-                [file_obj.get_uri(), GLib.filename_to_uri(output_file)],
+                [file_obj.get_uri(), output_file.get_uri()],
             )
 
     def _update_recent(self, files: list[str]):
