@@ -61,6 +61,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         GObject.GObject.__init__(self)
         self._open_dir_action: Union[Gio.SimpleAction, None] = None
         self._file_object: Union[Gio.File, None] = None
+        self._notify_target: str = ""
 
     def get_file_items(self, items):
         """
@@ -109,11 +110,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         if not self._open_dir_action:
             self.setup_notify_action(app)
 
-        notif_target = self._file_object.get_parent()
+        self._notify_target = self._file_object.get_parent().get_uri()
         notif = Gio.Notification.new("TarTeX")
-        notif.set_default_action_and_target(
-            "app.open-target", GLib.Variant.new_string(notif_target.get_uri())
-        )
+        notif.set_default_action("app.open-target")
         notif.set_body("⏳ Archive creation started (running in background)")
         notif.set_priority(Gio.NotificationPriority.URGENT)
         app.send_notification(self.NOTIFICATION_ID, notif)
@@ -130,17 +129,18 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         # Handler function for the action
         def handle_open_target(
-            action: Gio.SimpleAction, param: GLib.Variant
+            action: Gio.SimpleAction, param
         ):
             try:
-                tgt_uri = param.get_string()
-                nautilus_tgt = Gio.File.new_for_uri(tgt_uri)
+                nautilus_tgt = Gio.File.new_for_uri(self._notify_target)
                 if nautilus_tgt.query_file_type(
                         Gio.FileQueryInfoFlags.NONE
                 ) == Gio.FileType.DIRECTORY:
-                    nautilus_cmd = ["nautilus", tgt_uri]
+                    nautilus_cmd = ["nautilus", self._notify_target]
                 else:
-                    nautilus_cmd = ["nautilus", "--select", tgt_uri]
+                    nautilus_cmd = [
+                        "nautilus", "--select", self._notify_target
+                    ]
                 Gio.Subprocess.new(
                     nautilus_cmd,
                     Gio.SubprocessFlags.STDOUT_SILENCE
@@ -149,9 +149,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             except Exception as e:
                 print(f"Error launching file manager for URI: {e}")
 
-        # signature 's' for a single string GVariant parameter (URI)
         self._open_dir_action = Gio.SimpleAction.new(
-            "open-target", GLib.VariantType.new("s")
+            "open-target", None
         )
         self._open_dir_action.connect("activate", handle_open_target)
 
@@ -302,10 +301,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     success_msg.split()[1],
                 ]
             )
-            notif.set_default_action_and_target(
-                "app.open-target",
-                GLib.Variant.new_string(output_file.get_uri()),
-            )
+            self._notify_target = output_file.get_uri()
+            notif.set_default_action("app.open-target")
             GLib.timeout_add(
                 0, self._notify_send, app, "TarTeX Success", success_msg, notif
             )
