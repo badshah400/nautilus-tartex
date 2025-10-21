@@ -11,6 +11,7 @@ import typing
 from datetime import datetime
 from pathlib import Path
 from subprocess import run
+from typing import Union
 
 # Try to import the Nautilus and GObject libraries.
 # If this fails, the script will not be loaded by Nautilus,
@@ -49,7 +50,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
     NOTIFICATION_ID = "nautilus-tartex"
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Set terminal width long enough that most tartex log messages do not
         # have to wrap their lines.  Also makes wrapping consistent and not
         # dependent on the width of the console launching nautilus (or 80
@@ -58,6 +59,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         os.environ["TERM"] = "dumb"  # suppress rich formatting
         GObject.GObject.__init__(self)
+        self._open_dir_action: Union[Gio.SimpleAction, None] = None
+        self._working_dir_uri: str = ""
 
     def get_file_items(self, items):
         """
@@ -102,13 +105,41 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         if not app:  # cannot do anything without `app`; bail out
             return
         win = app.get_active_window() if app else None
+        if not self._open_dir_action:
+            self.setup_open_dir_action(app)
+        self._working_dir_uri = file_obj.get_parent_uri()
 
         notif = Gio.Notification.new("TarTeX")
+        notif.set_default_action("app.open-target")
         notif.set_body("⏳ Archive creation started (running in background)")
         notif.set_priority(Gio.NotificationPriority.URGENT)
         app.send_notification(self.NOTIFICATION_ID, notif)
         app.mark_busy()
         self._run_tartex_process(file_obj, notif, app, win)
+
+    def setup_open_dir_action(self, app: Gtk.Application):
+        """
+        Defines the 'open-target' action on the Nautilus application instance.
+        This handler will open the URI passed as a parameter.
+        """
+        if self._open_dir_action:
+            return # Action is already set up, do nothing.
+
+        # Handler function for the action
+        def handle_open_target(action, parameter):
+            try:
+                app.open([Gio.File.new_for_uri(self._working_dir_uri),], "1")
+            except Exception as e:
+                print(f"Error launching file manager for URI: {e}")
+
+        # signature 's' for a single string GVariant parameter (URI)
+        self._open_dir_action = Gio.SimpleAction.new(
+            "open-target", None
+        )
+        self._open_dir_action.connect("activate", handle_open_target)
+
+        # action name to use will be: 'app.open-target'.
+        app.add_action(self._open_dir_action)
 
     def _notify_send(
         self, app: Gtk.Application, head: str, msg: str, n: Gio.Notification
