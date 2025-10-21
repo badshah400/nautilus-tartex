@@ -15,7 +15,6 @@ python.find_installation('python3',
         'gi.repository.Gio',
         'gi.repository.Gtk',
         'gi.repository.Nautilus',
-        'gi.repository.Notify',
         'gi.repository.Pango',
   ],
 )

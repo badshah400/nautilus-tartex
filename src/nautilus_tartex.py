@@ -24,7 +24,6 @@ try:
         gi.require_version("Nautilus", "4.0")
     except ValueError:
         gi.require_version("Nautilus", "4.1")
-    gi.require_version("Notify", "0.7")
     gi.require_version("Pango", "1.0")
     from gi.repository import (  # type: ignore [attr-defined]
         Adw,
@@ -33,7 +32,6 @@ try:
         Gio,
         Gtk,
         Nautilus,
-        Notify,
         Pango,
     )
 except ImportError:
@@ -49,7 +47,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     for .tex and .fls files to create a tarball using tartex.
     """
 
-    Notify.init("TarTeX")
+    NOTIFICATION_ID = "nautilus-tartex"
 
     def __init__(self):
         # Set terminal width long enough that most tartex log messages do not
@@ -100,33 +98,32 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         Method is called when the user clicks the menu item. Sends a
         notification and call the function to run tartex
         """
-        notif = Notify.Notification.new(
-            "TarTeX",
-            "⏳ Archive creation started (running in background)",
-        )
-        notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
-        notif.show()
-        app = Gtk.Application.get_default()
-        if app:
-            # Get the active nautilus window
-            win = app.get_active_window()
+        app = Gtk.Application.get_default()  # must be nautilus
+        if not app:  # cannot do anything without `app`; bail out
+            return
+        win = app.get_active_window() if app else None
 
-        if app:
-            app.mark_busy()
+        notif = Gio.Notification.new("TarTeX")
+        notif.set_body("⏳ Archive creation started (running in background)")
+        notif.set_priority(Gio.NotificationPriority.URGENT)
+        app.send_notification(self.NOTIFICATION_ID, notif)
+        app.mark_busy()
         self._run_tartex_process(file_obj, notif, app, win)
 
-    def _notify_send(self, head: str, msg: str, n: Notify.Notification):
+    def _notify_send(
+        self, app: Gtk.Application, head: str, msg: str, n: Gio.Notification
+    ):
         """Send notification at end of process one way or another"""
-        n.update(head, msg)
-        n.set_urgency(Notify.Urgency.NORMAL)  # remove persistence
-        n.set_timeout(Notify.EXPIRES_DEFAULT)
-        n.show()
+        n.set_title(head)
+        n.set_body(msg)
+        n.set_priority(Gio.NotificationPriority.NORMAL)  # remove persistence
+        app.send_notification(self.NOTIFICATION_ID, n)
         return False
 
     def _run_tartex_process(
         self,
         file_obj: Nautilus.FileInfo,
-        n: Notify.Notification,
+        n: Gio.Notification,
         app: Gtk.Application,
         win: Gtk.Window,
     ):
@@ -142,7 +139,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         tartex_path = shutil.which("tartex")
         if not tartex_path:
             self._notify_send(
-                "Error", "🚨 tartex command not found in PATH", n
+                app, "Error", "🚨 tartex command not found in PATH", n
             )
             return
 
@@ -196,6 +193,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.timeout_add(
                 0,
                 self._notify_send,
+                app,
                 "TarTeX Error",
                 f"🚨 Failed to launch command: {err}",
             )
@@ -204,6 +202,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.timeout_add(
                 0,
                 self._notify_send,
+                app,
                 "TarTeX Error",
                 f"🚫 An unknown error occurred: {e}",
             )
@@ -223,6 +222,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.timeout_add(
                 0,
                 self._notify_send,
+                app,
                 "TarTeX Error",
                 f"🚨 Failed to create archive using {file_obj.get_name()}",
                 notif,
@@ -249,7 +249,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     f"Created TarTeX archive using {file_obj.get_name()}"
                 )
             GLib.timeout_add(
-                0, self._notify_send, "TarTeX Success", success_msg, notif
+                0, self._notify_send, app, "TarTeX Success", success_msg, notif
             )
             output_file = GLib.build_filenamev(
                 [
