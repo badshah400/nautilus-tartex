@@ -48,7 +48,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     for .tex and .fls files to create a tarball using tartex.
     """
 
-    NOTIFICATION_ID = "nautilus-tartex"
+    NOTIFICATION_ID = f"{__appname__}-notify"
 
     def __init__(self) -> None:
         # Set terminal width long enough that most tartex log messages do not
@@ -149,18 +149,18 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             except Exception as e:
                 print(f"Error launching file manager for URI: {e}")
 
-        self._open_dir_action = Gio.SimpleAction.new(
-            "open-target", None
-        )
+        self._open_dir_action = Gio.SimpleAction.new("open-target", None)
         self._open_dir_action.connect("activate", handle_open_target)
 
         # action name to use will be: 'app.open-target'.
         app.add_action(self._open_dir_action)
 
     def _notify_send(
-        self, app: Gtk.Application, head: str, msg: str, n: Gio.Notification
+        self, app: Gtk.Application, head: str, msg: str
     ):
         """Send notification at end of process one way or another"""
+        n = Gio.Notification.new("TarTeX")
+        n.set_default_action("app.open-target")
         n.set_title(head)
         n.set_body(msg)
         n.set_priority(Gio.NotificationPriority.NORMAL)  # remove persistence
@@ -170,7 +170,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     def _run_tartex_process(
         self,
         file_obj: Nautilus.FileInfo,
-        n: Gio.Notification,
         app: Gtk.Application,
         win: Gtk.Window,
     ):
@@ -186,7 +185,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         tartex_path = shutil.which("tartex")
         if not tartex_path:
             self._notify_send(
-                app, "Error", "🚨 tartex command not found in PATH", n
+                app, "Error", "🚨 tartex command not found in PATH"
             )
             return
 
@@ -233,7 +232,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 None,  # No stdin
                 None,  # Cancellable (None)
                 self._on_tartex_complete,  # Gio.AsyncReadyCallback function
-                (app, win, file_obj, n),  # data to pass to the callback
+                (app, win, file_obj),  # data to pass to the callback
             )
 
         except GLib.Error as err:
@@ -259,7 +258,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     ):
         """Callback func to run upon tartex completion"""
 
-        app, win, file_obj, notif = params
+        app, win, file_obj = params
         success, stdout, stderr = proc.communicate_utf8_finish(res)
         if app:
             app.unmark_busy()
@@ -272,7 +271,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 app,
                 "TarTeX Error",
                 f"🚨 Failed to create archive using {file_obj.get_name()}",
-                notif,
             )
             full_error_output = f"{stdout}\n"
             GLib.timeout_add(
@@ -302,9 +300,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 ]
             )
             self._notify_target = output_file.get_uri()
-            notif.set_default_action("app.open-target")
             GLib.timeout_add(
-                0, self._notify_send, app, "TarTeX Success", success_msg, notif
+                0, self._notify_send, app, "TarTeX Success", success_msg
             )
             GLib.idle_add(
                 self._update_recent,
