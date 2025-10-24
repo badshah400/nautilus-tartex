@@ -164,7 +164,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         n.set_title(head)
         n.set_body(msg)
         n.set_priority(Gio.NotificationPriority.NORMAL)  # remove persistence
-        app.send_notification(self.NOTIFICATION_ID, n)
+        # Send new notification with a 1 s delay to avoid previous "Archive
+        # creation started" notification disappearing too quickly — archive may
+        # be ready in a fraction of a second if recompilation is not needed
+        GLib.timeout_add_seconds(
+            1, app.send_notification, self.NOTIFICATION_ID, n
+        )
         return False
 
     def _run_tartex_process(
