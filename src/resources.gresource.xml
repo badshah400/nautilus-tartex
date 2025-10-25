@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/nautilus/extensions/nautilus-tartex/icons/scalable/actions/">
+    <file preprocess="xml-stripblanks">archive-symbolic.svg</file>
+  </gresource>
+</gresources>
