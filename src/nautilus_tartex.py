@@ -107,7 +107,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         if not app:  # cannot do anything without `app`; bail out
             return
 
-        ## Not needed on account of not setting a custom default-action to notif
+        ## Not needed on account of not setting custom default-action to notif
         # if not app.lookup_action("app.open-target"):
         #     self.setup_notify_action(app)
 
@@ -137,24 +137,26 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         Defines the 'open-target' action on the Nautilus application instance.
         This handler will open the URI passed as a parameter.
         """
+
         # Handler function for the action
-        def handle_open_target(
-            action: Gio.SimpleAction, param
-        ):
+        def handle_open_target(action: Gio.SimpleAction, param):
             try:
                 nautilus_tgt = Gio.File.new_for_uri(self._notify_target)
-                if nautilus_tgt.query_file_type(
-                        Gio.FileQueryInfoFlags.NONE
-                ) == Gio.FileType.DIRECTORY:
+                if (
+                    nautilus_tgt.query_file_type(Gio.FileQueryInfoFlags.NONE)
+                    == Gio.FileType.DIRECTORY
+                ):
                     nautilus_cmd = ["nautilus", self._notify_target]
                 else:
                     nautilus_cmd = [
-                        "nautilus", "--select", self._notify_target
+                        "nautilus",
+                        "--select",
+                        self._notify_target,
                     ]
                 Gio.Subprocess.new(
                     nautilus_cmd,
                     Gio.SubprocessFlags.STDOUT_SILENCE
-                    | Gio.SubprocessFlags.STDERR_SILENCE
+                    | Gio.SubprocessFlags.STDERR_SILENCE,
                 )
             except Exception as e:
                 print(f"Error launching file manager for URI: {e}")
@@ -165,9 +167,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # action name to use will be: 'app.open-target'.
         app.add_action(self._open_dir_action)
 
-    def _notify_send(
-        self, app: Gtk.Application, head: str, msg: str
-    ):
+    def _notify_send(self, app: Gtk.Application, head: str, msg: str):
         """Send notification at end of process one way or another"""
         n = Gio.Notification.new("TarTeX")
         n.set_title(head)
@@ -223,8 +223,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     "--overwrite",
                     "--git-rev",
                     "--output",
-                    parent_dir.get_path(),  # Specify dir but use default
-                                            # tartex git-rev name for output
+                    # Specify dir but use default tartex git-rev filename
+                    parent_dir.get_path(),
                 ]
             else:
                 raise RuntimeError("unable to find git in PATH")
@@ -334,7 +334,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         for _f in files:
             if not rec_man.add_item(_f):
                 print(
-                    f"Error: {__appname__}: Failed to add {_f} to recent manager."
+                    f"Error: {__appname__}: Failed to add {_f} to recent "
+                    "manager."
                 )
 
     def _show_error_dialog(
@@ -393,7 +394,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             Gtk.SearchBar, builder.get_object("search_bar")
         )
         search_entry: Gtk.SearchEntry = typing.cast(
-           Gtk.SearchEntry, builder.get_object("search_entry")
+            Gtk.SearchEntry, builder.get_object("search_entry")
         )
         toggle_group: Adw.ToggleGroup = typing.cast(
             Adw.ToggleGroup, builder.get_object("toggle_group")
