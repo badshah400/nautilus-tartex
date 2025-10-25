@@ -106,27 +106,37 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         app = Gtk.Application.get_default()  # must be nautilus
         if not app:  # cannot do anything without `app`; bail out
             return
-        win = app.get_active_window() if app else None
-        if not self._open_dir_action:
-            self.setup_notify_action(app)
+
+        ## Not needed on account of not setting a custom default-action to notif
+        # if not app.lookup_action("app.open-target"):
+        #     self.setup_notify_action(app)
 
         self._notify_target = self._file_object.get_parent().get_uri()
         notif = Gio.Notification.new("TarTeX")
-        notif.set_default_action("app.open-target")
+
+        # Do not add a default action to the notification: this only works when
+        # the app (nautilus) is still running.  When the app disappears (last
+        # window closed), the registered action disappears with it and
+        # clicking on the notification thereafter tries to trigger the no-longer
+        # existing "open-target" action with an obvious error.  Ultimately, this
+        # means no app window is launched, which is worse than the default
+        # no-action event of launching nautilus at HOME dir.
+        #
+        # notif.set_default_action("app.open-target")
+
         notif.set_body("⏳ Archive creation started (running in background)")
         notif.set_priority(Gio.NotificationPriority.URGENT)
         app.send_notification(self.NOTIFICATION_ID, notif)
         app.mark_busy()
-        self._run_tartex_process(file_obj, notif, app, win)
+
+        win = app.get_active_window() if app else None
+        self._run_tartex_process(file_obj, app, win)
 
     def setup_notify_action(self, app: Gtk.Application):
         """
         Defines the 'open-target' action on the Nautilus application instance.
         This handler will open the URI passed as a parameter.
         """
-        if self._open_dir_action:
-            return # Action is already set up, do nothing.
-
         # Handler function for the action
         def handle_open_target(
             action: Gio.SimpleAction, param
@@ -160,16 +170,17 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     ):
         """Send notification at end of process one way or another"""
         n = Gio.Notification.new("TarTeX")
-        n.set_default_action("app.open-target")
         n.set_title(head)
         n.set_body(msg)
         n.set_priority(Gio.NotificationPriority.NORMAL)  # remove persistence
+
         # Send new notification with a 1 s delay to avoid previous "Archive
         # creation started" notification disappearing too quickly — archive may
         # be ready in a fraction of a second if recompilation is not needed
         GLib.timeout_add_seconds(
             1, app.send_notification, self.NOTIFICATION_ID, n
         )
+
         return False
 
     def _run_tartex_process(
