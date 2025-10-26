@@ -53,7 +53,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     resource = Gio.resource_load(
         str(Path(__file__).parent / f"{__appname__}-resources.gresource")
     )
-    Gio.Resource._register(resource)
+    Gio.Resource._register(resource)  # type: ignore [attr-defined]
 
     def __init__(self) -> None:
         # Set terminal width long enough that most tartex log messages do not
@@ -371,8 +371,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         builder = Gtk.Builder()
         try:
-            builder.add_from_file(
-                str(Path(__file__).parent / "nautilus-tartex.ui")
+            builder.add_from_resource(
+                "/org/gnome/nautilus/ui/nautilus-tartex.ui"
             )
         except Exception as e:
             print(f"FATAL: Could not load UI file: {e}")
