@@ -7,11 +7,10 @@ import os
 import re
 import shutil
 import sys
-import typing
 from datetime import datetime
 from pathlib import Path
 from subprocess import run
-from typing import Union
+from typing import Union, cast
 
 # Try to import the Nautilus and GObject libraries.
 # If this fails, the script will not be loaded by Nautilus,
@@ -371,40 +370,40 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             return False
 
         # Retrieve widgets by ID (matching the UI file IDs)
-        dialog: Adw.Dialog = typing.cast(
+        dialog: Adw.Dialog = cast(
             Adw.Dialog, builder.get_object("error_dialog")
         )
-        error_label: Gtk.Label = typing.cast(
+        error_label: Gtk.Label = cast(
             Gtk.Label, builder.get_object("summary_label")
         )
-        scrolled_box: Gtk.ScrolledWindow = typing.cast(
+        scrolled_box: Gtk.ScrolledWindow = cast(
             Gtk.ScrolledWindow, builder.get_object("scrolled_window")
         )
-        text_view: Gtk.TextView = typing.cast(
+        text_view: Gtk.TextView = cast(
             Gtk.TextView, builder.get_object("text_view")
         )
-        copy_button: Gtk.Button = typing.cast(
+        copy_button: Gtk.Button = cast(
             Gtk.Button, builder.get_object("copy_button")
         )
-        log_button: Gtk.Button = typing.cast(
+        log_button: Gtk.Button = cast(
             Gtk.Button, builder.get_object("log_button")
         )
-        close_button: Gtk.Button = typing.cast(
+        close_button: Gtk.Button = cast(
             Gtk.Button, builder.get_object("close_button")
         )
-        header_search_button: Gtk.Button = typing.cast(
+        header_search_button: Gtk.Button = cast(
             Gtk.Button, builder.get_object("search_button")
         )
-        header_search_bar: Gtk.SearchBar = typing.cast(
+        header_search_bar: Gtk.SearchBar = cast(
             Gtk.SearchBar, builder.get_object("search_bar")
         )
-        search_entry: Gtk.SearchEntry = typing.cast(
+        search_entry: Gtk.SearchEntry = cast(
             Gtk.SearchEntry, builder.get_object("search_entry")
         )
-        toggle_group: Adw.ToggleGroup = typing.cast(
+        toggle_group: Adw.ToggleGroup = cast(
             Adw.ToggleGroup, builder.get_object("toggle_group")
         )
-        toast_widget: Adw.ToastOverlay = typing.cast(
+        toast_widget: Adw.ToastOverlay = cast(
             Adw.ToastOverlay, builder.get_object("toast_overlay")
         )
 
