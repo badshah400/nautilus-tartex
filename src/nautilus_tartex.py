@@ -65,7 +65,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         GObject.GObject.__init__(self)
         self._open_dir_action: Union[Gio.SimpleAction, None] = None
         self._file_object: Union[Gio.File, None] = None
-        self._notify_target: str = ""
 
     def get_file_items(self, items):
         """
