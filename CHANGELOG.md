@@ -5,6 +5,7 @@
 ### Fixed
 
 - Improve logic for detection of whether to use tartex's `git-rev` workflow
+- Fix GLib exception handling that used `GLib.GError` instead of `GLib.Error`
 
 ## 0.2.0 [2025-10-17]
 
