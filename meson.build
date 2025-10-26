@@ -15,7 +15,6 @@ python.find_installation('python3',
         'gi.repository.Gio',
         'gi.repository.Gtk',
         'gi.repository.Nautilus',
-        'gi.repository.Notify',
         'gi.repository.Pango',
   ],
 )
@@ -33,5 +32,16 @@ endif
 datadir = get_option('datadir')
 extension_dir = prefix / datadir / files_app + '-python' / 'extensions'
 
+gnome = import('gnome')
+resources = gnome.compile_resources(
+  meson.project_name() + '-resources',
+  'resources' / 'resources.gresource.xml',
+  gresource_bundle: true,
+  source_dir: meson.current_build_dir(),
+  install: true,
+  install_dir: extension_dir,
+)
+
 install_data('src/nautilus_tartex.py', install_dir: extension_dir)
-install_data('src/nautilus-tartex.ui', install_dir: extension_dir)
+# install_data('src/nautilus-tartex.ui', install_dir: extension_dir)
+# install_data('data/icons/archive-symbolic.svg', install_dir: extension_dir)

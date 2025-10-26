@@ -10,6 +10,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from subprocess import run
+from typing import Union, cast
 
 # Try to import the Nautilus and GObject libraries.
 # If this fails, the script will not be loaded by Nautilus,
@@ -23,7 +24,6 @@ try:
         gi.require_version("Nautilus", "4.0")
     except ValueError:
         gi.require_version("Nautilus", "4.1")
-    gi.require_version("Notify", "0.7")
     gi.require_version("Pango", "1.0")
     from gi.repository import (  # type: ignore [attr-defined]
         Adw,
@@ -32,7 +32,6 @@ try:
         Gio,
         Gtk,
         Nautilus,
-        Notify,
         Pango,
     )
 except ImportError:
@@ -48,17 +47,25 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     for .tex and .fls files to create a tarball using tartex.
     """
 
-    Notify.init("TarTeX")
+    NOTIFICATION_ID = f"{__appname__}-notify"
 
-    def __init__(self):
+    resource = Gio.resource_load(
+        str(Path(__file__).parent / f"{__appname__}-resources.gresource")
+    )
+    Gio.Resource._register(resource)  # type: ignore [attr-defined]
+
+    def __init__(self) -> None:
         # Set terminal width long enough that most tartex log messages do not
-        # have to wrap their lines. Also makes wrapping consistent and not
+        # have to wrap their lines.  Also makes wrapping consistent and not
         # dependent on the width of the console launching nautilus (or 80
         # when started from the desktop menus).
         os.environ["COLUMNS"] = "132"
 
         os.environ["TERM"] = "dumb"  # suppress rich formatting
         GObject.GObject.__init__(self)
+        self._open_dir_action: Union[Gio.SimpleAction, None] = None
+        self._file_object: Union[Gio.File, None] = None
+        self._notify_target: str = ""
 
     def get_file_items(self, items):
         """
@@ -76,6 +83,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         if not file_obj.is_directory() and (
             file_obj.get_name().endswith((".tex", ".fls"))
         ):
+            self._file_object = file_obj.get_location()
             top_menu_item = Nautilus.MenuItem(
                 name="TartexNautilusExtension::CreateTarball",
                 label="Create TarTeX Archive",
@@ -99,33 +107,89 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         Method is called when the user clicks the menu item. Sends a
         notification and call the function to run tartex
         """
-        notif = Notify.Notification.new(
-            "TarTeX",
-            "⏳ Archive creation started (running in background)",
-        )
-        notif.set_urgency(Notify.Urgency.CRITICAL)  # make notif persistent
-        notif.show()
-        app = Gtk.Application.get_default()
-        if app:
-            # Get the active nautilus window
-            win = app.get_active_window()
+        app = Gtk.Application.get_default()  # must be nautilus
+        if not app:  # cannot do anything without `app`; bail out
+            return
 
-        if app:
-            app.mark_busy()
-        self._run_tartex_process(file_obj, notif, app, win)
+        ## Not needed on account of not setting custom default-action to notif
+        # if not app.lookup_action("app.open-target"):
+        #     self.setup_notify_action(app)
 
-    def _notify_send(self, head: str, msg: str, n: Notify.Notification):
+        self._notify_target = self._file_object.get_parent().get_uri()
+        notif = Gio.Notification.new("TarTeX")
+
+        # Do not add a default action to the notification: this only works when
+        # the app (nautilus) is still running.  When the app disappears (last
+        # window closed), the registered action disappears with it and
+        # clicking on the notification thereafter tries to trigger the no-longer
+        # existing "open-target" action with an obvious error.  Ultimately, this
+        # means no app window is launched, which is worse than the default
+        # no-action event of launching nautilus at HOME dir.
+        #
+        # notif.set_default_action("app.open-target")
+
+        notif.set_body("⏳ Archive creation started (running in background)")
+        notif.set_priority(Gio.NotificationPriority.URGENT)
+        app.send_notification(self.NOTIFICATION_ID, notif)
+        app.mark_busy()
+
+        win = app.get_active_window() if app else None
+        self._run_tartex_process(file_obj, app, win)
+
+    def setup_notify_action(self, app: Gtk.Application):
+        """
+        Defines the 'open-target' action on the Nautilus application instance.
+        This handler will open the URI passed as a parameter.
+        """
+
+        # Handler function for the action
+        def handle_open_target(action: Gio.SimpleAction, param):
+            try:
+                nautilus_tgt = Gio.File.new_for_uri(self._notify_target)
+                if (
+                    nautilus_tgt.query_file_type(Gio.FileQueryInfoFlags.NONE)
+                    == Gio.FileType.DIRECTORY
+                ):
+                    nautilus_cmd = ["nautilus", self._notify_target]
+                else:
+                    nautilus_cmd = [
+                        "nautilus",
+                        "--select",
+                        self._notify_target,
+                    ]
+                Gio.Subprocess.new(
+                    nautilus_cmd,
+                    Gio.SubprocessFlags.STDOUT_SILENCE
+                    | Gio.SubprocessFlags.STDERR_SILENCE,
+                )
+            except Exception as e:
+                print(f"Error launching file manager for URI: {e}")
+
+        self._open_dir_action = Gio.SimpleAction.new("open-target", None)
+        self._open_dir_action.connect("activate", handle_open_target)
+
+        # action name to use will be: 'app.open-target'.
+        app.add_action(self._open_dir_action)
+
+    def _notify_send(self, app: Gtk.Application, head: str, msg: str):
         """Send notification at end of process one way or another"""
-        n.update(head, msg)
-        n.set_urgency(Notify.Urgency.NORMAL)  # remove persistence
-        n.set_timeout(Notify.EXPIRES_DEFAULT)
-        n.show()
+        n = Gio.Notification.new("TarTeX")
+        n.set_title(head)
+        n.set_body(msg)
+        n.set_priority(Gio.NotificationPriority.NORMAL)  # remove persistence
+
+        # Send new notification with a 1 s delay to avoid previous "Archive
+        # creation started" notification disappearing too quickly — archive may
+        # be ready in a fraction of a second if recompilation is not needed
+        GLib.timeout_add_seconds(
+            1, app.send_notification, self.NOTIFICATION_ID, n
+        )
+
         return False
 
     def _run_tartex_process(
         self,
         file_obj: Nautilus.FileInfo,
-        n: Notify.Notification,
         app: Gtk.Application,
         win: Gtk.Window,
     ):
@@ -141,7 +205,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         tartex_path = shutil.which("tartex")
         if not tartex_path:
             self._notify_send(
-                "Error", "🚨 tartex command not found in PATH", n
+                app, "Error", "🚨 tartex command not found in PATH"
             )
             return
 
@@ -163,8 +227,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     "--overwrite",
                     "--git-rev",
                     "--output",
-                    parent_dir.get_path(),  # specify dir but use default
-                                            # tartex git-rev name for output
+                    # Specify dir but use default tartex git-rev filename
+                    parent_dir.get_path(),
                 ]
             else:
                 raise RuntimeError("unable to find git in PATH")
@@ -188,13 +252,14 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 None,  # No stdin
                 None,  # Cancellable (None)
                 self._on_tartex_complete,  # Gio.AsyncReadyCallback function
-                (app, win, file_obj, n),  # data to pass to the callback
+                (app, win, file_obj),  # data to pass to the callback
             )
 
         except GLib.Error as err:
             GLib.timeout_add(
                 0,
                 self._notify_send,
+                app,
                 "TarTeX Error",
                 f"🚨 Failed to launch command: {err}",
             )
@@ -203,6 +268,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.timeout_add(
                 0,
                 self._notify_send,
+                app,
                 "TarTeX Error",
                 f"🚫 An unknown error occurred: {e}",
             )
@@ -212,7 +278,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     ):
         """Callback func to run upon tartex completion"""
 
-        app, win, file_obj, notif = params
+        app, win, file_obj = params
         success, stdout, stderr = proc.communicate_utf8_finish(res)
         if app:
             app.unmark_busy()
@@ -222,9 +288,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             GLib.timeout_add(
                 0,
                 self._notify_send,
+                app,
                 "TarTeX Error",
                 f"🚨 Failed to create archive using {file_obj.get_name()}",
-                notif,
             )
             full_error_output = f"{stdout}\n"
             GLib.timeout_add(
@@ -247,18 +313,19 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 success_msg = (
                     f"Created TarTeX archive using {file_obj.get_name()}"
                 )
-            GLib.timeout_add(
-                0, self._notify_send, "TarTeX Success", success_msg, notif
-            )
-            output_file = GLib.build_filenamev(
+            output_file: Gio.File = Gio.File.new_build_filenamev(
                 [
                     file_obj.get_parent_location().get_path(),
                     success_msg.split()[1],
                 ]
             )
+            self._notify_target = output_file.get_uri()
+            GLib.timeout_add(
+                0, self._notify_send, app, "TarTeX Success", success_msg
+            )
             GLib.idle_add(
                 self._update_recent,
-                [file_obj.get_uri(), GLib.filename_to_uri(output_file)],
+                [file_obj.get_uri(), output_file.get_uri()],
             )
 
     def _update_recent(self, files: list[str]):
@@ -271,7 +338,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         for _f in files:
             if not rec_man.add_item(_f):
                 print(
-                    f"Error: {__appname__}: Failed to add {_f} to recent manager."
+                    f"Error: {__appname__}: Failed to add {_f} to recent "
+                    "manager."
                 )
 
     def _show_error_dialog(
@@ -294,28 +362,50 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         builder = Gtk.Builder()
         try:
-            builder.add_from_file(
-                str(Path(__file__).parent / "nautilus-tartex.ui")
+            builder.add_from_resource(
+                "/org/gnome/nautilus/ui/nautilus-tartex.ui"
             )
         except Exception as e:
             print(f"FATAL: Could not load UI file: {e}")
             return False
 
         # Retrieve widgets by ID (matching the UI file IDs)
-        dialog: Adw.Dialog = builder.get_object("error_dialog")  # type: ignore[assignment]
-        error_label: Gtk.Label = builder.get_object("summary_label")  # type: ignore[assignment]
-        scrolled_box: Gtk.ScrolledWindow = builder.get_object(
-            "scrolled_window"
-        )  # type: ignore[assignment]
-        text_view: Gtk.TextView = builder.get_object("text_view")  # type: ignore[assignment]
-        copy_button: Gtk.Button = builder.get_object("copy_button")  # type: ignore[assignment]
-        log_button: Gtk.Button = builder.get_object("log_button")  # type: ignore[assignment]
-        close_button: Gtk.Button = builder.get_object("close_button")  # type: ignore[assignment]
-        header_search_button: Gtk.Button = builder.get_object("search_button")  # type: ignore[assignment]
-        header_search_bar: Gtk.SearchBar = builder.get_object("search_bar")  # type: ignore[assignment]
-        search_entry: Gtk.SearchEntry = builder.get_object("search_entry")  # type: ignore[assignment]
-        toggle_group: Adw.ToggleGroup = builder.get_object("toggle_group")  # type: ignore[assignment]
-        toast_widget: Adw.ToastOverlay = builder.get_object("toast_overlay")  # type: ignore[assignment]
+        dialog: Adw.Dialog = cast(
+            Adw.Dialog, builder.get_object("error_dialog")
+        )
+        error_label: Gtk.Label = cast(
+            Gtk.Label, builder.get_object("summary_label")
+        )
+        scrolled_box: Gtk.ScrolledWindow = cast(
+            Gtk.ScrolledWindow, builder.get_object("scrolled_window")
+        )
+        text_view: Gtk.TextView = cast(
+            Gtk.TextView, builder.get_object("text_view")
+        )
+        copy_button: Gtk.Button = cast(
+            Gtk.Button, builder.get_object("copy_button")
+        )
+        log_button: Gtk.Button = cast(
+            Gtk.Button, builder.get_object("log_button")
+        )
+        close_button: Gtk.Button = cast(
+            Gtk.Button, builder.get_object("close_button")
+        )
+        header_search_button: Gtk.Button = cast(
+            Gtk.Button, builder.get_object("search_button")
+        )
+        header_search_bar: Gtk.SearchBar = cast(
+            Gtk.SearchBar, builder.get_object("search_bar")
+        )
+        search_entry: Gtk.SearchEntry = cast(
+            Gtk.SearchEntry, builder.get_object("search_entry")
+        )
+        toggle_group: Adw.ToggleGroup = cast(
+            Adw.ToggleGroup, builder.get_object("toggle_group")
+        )
+        toast_widget: Adw.ToastOverlay = cast(
+            Adw.ToastOverlay, builder.get_object("toast_overlay")
+        )
 
         win_width, win_height = parent_window.get_default_size()
         if not win_width:
@@ -600,7 +690,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 None,  # LaunchContext (not needed here)
             )
 
-        except GLib.GError as err:
+        except GLib.Error as err:
             if err.domain == "g-io-error-quark":
                 log_msg = f"File not found: {log_file.get_basename()}"
                 print(f"{__appname__}: ERROR: {log_msg}", file=sys.stderr)
