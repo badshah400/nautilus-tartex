@@ -131,13 +131,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         notif.set_body("⏳ Archive creation started (running in background)")
         notif.set_priority(Gio.NotificationPriority.URGENT)
-        self.notification_icon = Gio.FileIcon.new(
-            Gio.file_new_for_uri(
-                "resources:///org/gnome/nautilus/extensions/nautilus-tartex/"
-                "icons/scalable/actions/archive-symbolic.svg"
-            )
-        )
-        notif.set_icon(self.notification_icon)
         app.send_notification(self.NOTIFICATION_ID, notif)
         app.mark_busy()
 
@@ -185,7 +178,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         n.set_title(head)
         n.set_body(msg)
         n.set_priority(Gio.NotificationPriority.NORMAL)  # remove persistence
-        n.set_icon(self.notification_icon)
 
         # Send new notification with a 1 s delay to avoid previous "Archive
         # creation started" notification disappearing too quickly — archive may
