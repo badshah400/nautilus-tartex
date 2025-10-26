@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
+  <!-- Hooking into nautilus directly ensures resources are loaded
+       automatically at application launch
+  -->
   <gresource prefix="/org/gnome/nautilus">
+    <!-- icon path should follow hicolor icon theme dir hierarchy -->
     <file preprocess="xml-stripblanks">icons/scalable/actions/archive-symbolic.svg</file>
     <file compressed="true">ui/nautilus-tartex.ui</file>
   </gresource>

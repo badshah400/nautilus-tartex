@@ -691,7 +691,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 None,  # LaunchContext (not needed here)
             )
 
-        except GLib.GError as err:
+        except GLib.Error as err:
             if err.domain == "g-io-error-quark":
                 log_msg = f"File not found: {log_file.get_basename()}"
                 print(f"{__appname__}: ERROR: {log_msg}", file=sys.stderr)
