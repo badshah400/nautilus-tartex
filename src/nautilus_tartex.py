@@ -132,9 +132,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         win = app.get_active_window() if app else None
         self.prg_dialog: Adw.Dialog = Adw.Dialog.new()
-        self.prg_dialog.set_property("width-request", 64)
-        self.prg_dialog.set_property("height-request", 64)
-        # self.prg_dialog.set_decorated(False)
         self.prg_dialog.set_can_close(False)
         spinner: Adw.Spinner = Adw.Spinner.new()
         spinner.set_margin_top(4)
