@@ -19,7 +19,7 @@
         <property name="margin-end">12</property>
         <child>
           <object class="GtkImage" id="status-icon">
-            <property name="icon-name">test-pass-symbolic</property>
+            <property name="icon-name">success-symbolic</property>
             <property name="icon-size">large</property>
             <property name="visible">true</property>
           </object>

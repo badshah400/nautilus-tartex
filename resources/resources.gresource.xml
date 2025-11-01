@@ -6,7 +6,7 @@
   <gresource prefix="/org/gnome/nautilus">
     <!-- icon path should follow hicolor icon theme dir hierarchy -->
     <file preprocess="xml-stripblanks">icons/scalable/actions/archive-symbolic.svg</file>
-    <file preprocess="xml-stripblanks">icons/scalable/actions/test-pass-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/success-symbolic.svg</file>
     <file compressed="true">ui/nautilus-tartex.ui</file>
     <file compressed="true">ui/nautilus-tartex-progress.ui</file>
     <file compressed="true">ui/nautilus-tartex-complete.ui</file>
