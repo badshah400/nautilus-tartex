@@ -139,7 +139,6 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         app.mark_busy()
 
-        win: Gtk.Window = app.get_active_window()  # type: ignore[assignment]
         builder = Gtk.Builder()
         try:
             builder.add_from_resource(
@@ -153,6 +152,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             Adw.Dialog, builder.get_object("progress-dialog")
         )
 
+        win: Gtk.Window = app.get_active_window()  # type: ignore[assignment]
         self.prg_dialog.present(win)
         self._run_tartex_process(file_obj, app, win)
 
