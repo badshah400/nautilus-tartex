@@ -38,7 +38,7 @@ except ImportError:
     pass
 
 __appname__ = "nautilus-tartex"
-__version__ = "0.3.0.dev0"
+__version__ = "0.3.0"
 
 
 class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):

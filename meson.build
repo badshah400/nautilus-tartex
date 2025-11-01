@@ -1,5 +1,5 @@
 project('nautilus-tartex',
-  version: '0.3.0.dev0',
+  version: '0.3.0',
   meson_version: '>= 0.59.0'
 )
 
