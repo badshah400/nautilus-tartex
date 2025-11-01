@@ -125,14 +125,27 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # means no app window is launched, which is worse than the default
         # no-action event of launching nautilus at HOME dir.
         #
+        # notif = Gio.Notification.new("TarTeX")
         # notif.set_default_action("app.open-target")
 
-        notif.set_body("⏳ Archive creation started (running in background)")
-        notif.set_priority(Gio.NotificationPriority.URGENT)
-        app.send_notification(self.NOTIFICATION_ID, notif)
         app.mark_busy()
 
         win = app.get_active_window() if app else None
+        self.prg_dialog: Adw.Dialog = Adw.Dialog.new()
+        self.prg_dialog.set_property("width-request", 64)
+        self.prg_dialog.set_property("height-request", 64)
+        # self.prg_dialog.set_decorated(False)
+        self.prg_dialog.set_can_close(False)
+        spinner: Adw.Spinner = Adw.Spinner.new()
+        spinner.set_margin_top(4)
+        spinner.set_margin_bottom(4)
+        spinner.set_margin_start(4)
+        spinner.set_margin_end(4)
+        spinner.set_property("width-request", 48)
+        spinner.set_property("height-request", 48)
+        self.prg_dialog.set_child(spinner)
+        spinner.set_visible(True)
+        self.prg_dialog.present(win)
         self._run_tartex_process(file_obj, app, win)
 
     def setup_notify_action(self, app: Gtk.Application):
@@ -279,6 +292,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         app, win, file_obj = params
         success, stdout, stderr = proc.communicate_utf8_finish(res)
+        self.prg_dialog.force_close()
         if app:
             app.unmark_busy()
         exit_code = proc.get_exit_status()
