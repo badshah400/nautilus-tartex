@@ -4,11 +4,12 @@
   <requires lib="libadwaita" version="1.7"/>
   <object class="AdwDialog" id="progress-dialog">
     <property name="can-close">false</property>
+    <property name="presentation-mode">floating</property>
     <child>
       <object class="GtkBox" id="progress-box">
         <property name="halign">fill</property>
         <property name="hexpand">true</property>
-        <property name="orientation">vertical</property>
+        <property name="orientation">horizontal</property>
         <property name="spacing">8</property>
         <property name="vexpand">true</property>
         <property name="margin-top">12</property>
@@ -24,6 +25,7 @@
         </child>
         <child>
           <object class="GtkLabel" id="spinner-label">
+            <property name="margin-start">12</property>
             <property name="label" translatable="yes">TarTeX archiving...</property>
           </object>
         </child>
