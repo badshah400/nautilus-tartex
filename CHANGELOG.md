@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+
+- Use transient dialog-box with spinner as indicator when tartex archiving is in progress
+- Drop notification indicating tartex archiving in progress
+- Add pop-up dialog attached to active nautilus window when tartex succeeds
+
 ### Fixed
 
 - Improve logic for detection of whether to use tartex's `git-rev` workflow
