@@ -293,22 +293,22 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         app, win, file_obj = params
         success, stdout, stderr = proc.communicate_utf8_finish(res)
-        self.prg_dialog.force_close()
+        GLib.timeout_add_seconds(1, self.prg_dialog.force_close)
         if app:
             app.unmark_busy()
         exit_code = proc.get_exit_status()
 
         if exit_code:
-            GLib.timeout_add(
-                0,
+            GLib.timeout_add_seconds(
+                1,
                 self._notify_send,
                 app,
                 "TarTeX Error",
                 f"🚨 Failed to create archive using {file_obj.get_name()}",
             )
             full_error_output = f"{stdout}\n"
-            GLib.timeout_add(
-                0,
+            GLib.timeout_add_seconds(
+                1,
                 self._show_error_dialog,
                 win,
                 file_obj,
@@ -342,12 +342,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             label: Gtk.Label = cast(
                 Gtk.Label, builder.get_object("status-label")
             )
-            label.set_markup(success_msg.rstrip("."))
-            self.prg_dialog.present(win)
+            label.set_markup(success_msg.rstrip(".")[1:])
+            GLib.timeout_add_seconds(1, self.prg_dialog.present, win)
             # GLib.timeout_add_seconds(3, self.prg_dialog.force_close)
             self._notify_target = output_file.get_uri()
-            GLib.timeout_add(
-                0, self._notify_send, app, "TarTeX Success", success_msg
+            GLib.timeout_add_seconds(
+                1, self._notify_send, app, "TarTeX Success", success_msg
             )
             GLib.idle_add(
                 self._update_recent,
