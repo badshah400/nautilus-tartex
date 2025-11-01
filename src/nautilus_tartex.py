@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from subprocess import run
-from typing import Union, cast
+from typing import Optional, Union, cast
 
 # Try to import the Nautilus and GObject libraries.
 # If this fails, the script will not be loaded by Nautilus,
@@ -66,7 +66,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         self._open_dir_action: Union[Gio.SimpleAction, None] = None
         self._file_object: Union[Gio.File, None] = None
 
-    def get_file_items(self, items):
+    def get_file_items(
+            self, items: list[Nautilus.FileInfo]
+    ) -> list[Nautilus.MenuItem]:
         """
         Called by Nautilus to get the list of menu items to display for the
         given files.  The 'items' parameter is the list of Nautilus.FileInfo
@@ -101,12 +103,16 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     ) -> list[Nautilus.MenuItem]:
         return []
 
-    def on_tartex_activate(self, menu_item, file_obj):
+    def on_tartex_activate(
+            self, menu_item: Nautilus.MenuItem, file_obj: Nautilus.FileInfo
+    ) -> None:
         """
         Method is called when the user clicks the menu item. Sends a
         notification and call the function to run tartex
         """
-        app = Gtk.Application.get_default()  # must be nautilus
+        app: Optional[Gtk.Application] = cast(
+            Gtk.Application, Gtk.Application.get_default()  # must be nautilus
+        )
         if not app:  # cannot do anything without `app`; bail out
             return
 
@@ -114,8 +120,11 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         # if not app.lookup_action("app.open-target"):
         #     self.setup_notify_action(app)
 
-        self._notify_target = self._file_object.get_parent().get_uri()
-        notif = Gio.Notification.new("TarTeX")
+        if self._file_object:
+            _par = self._file_object.get_parent()
+            self._notify_target = _par.get_uri() if _par else None
+        else:
+            self._notify_target = None
 
         # Do not add a default action to the notification: this only works when
         # the app (nautilus) is still running.  When the app disappears (last
@@ -130,7 +139,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         app.mark_busy()
 
-        win = app.get_active_window() if app else None
+        win: Gtk.Window = app.get_active_window()  # type: ignore[assignment]
         self.prg_dialog: Adw.Dialog = Adw.Dialog.new()
         self.prg_dialog.set_can_close(False)
         spinner: Adw.Spinner = Adw.Spinner.new()
