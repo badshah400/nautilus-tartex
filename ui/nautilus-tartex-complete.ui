@@ -31,6 +31,7 @@
             <property name="margin-end">12</property>
             <property name="label" translatable="yes">Successful</property>
             <property name="wrap">true</property>
+            <property name="lines">2</property>
           </object>
         </child>
       </object>

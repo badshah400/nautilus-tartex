@@ -342,6 +342,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             label: Gtk.Label = cast(
                 Gtk.Label, builder.get_object("status-label")
             )
+            # drop unicode icon at the start of msg (and full-stop at end)
             label.set_markup(success_msg.rstrip(".")[1:])
             GLib.timeout_add_seconds(1, self.prg_dialog.present, win)
             # GLib.timeout_add_seconds(3, self.prg_dialog.force_close)
