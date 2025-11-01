@@ -140,17 +140,19 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         app.mark_busy()
 
         win: Gtk.Window = app.get_active_window()  # type: ignore[assignment]
-        self.prg_dialog: Adw.Dialog = Adw.Dialog.new()
-        self.prg_dialog.set_can_close(False)
-        spinner: Adw.Spinner = Adw.Spinner.new()
-        spinner.set_margin_top(4)
-        spinner.set_margin_bottom(4)
-        spinner.set_margin_start(4)
-        spinner.set_margin_end(4)
-        spinner.set_property("width-request", 48)
-        spinner.set_property("height-request", 48)
-        self.prg_dialog.set_child(spinner)
-        spinner.set_visible(True)
+        builder = Gtk.Builder()
+        try:
+            builder.add_from_resource(
+                "/org/gnome/nautilus/ui/nautilus-tartex-progress.ui"
+            )
+        except Exception as e:
+            print(f"FATAL: Could not load UI file: {e}")
+            return
+
+        self.prg_dialog: Adw.Dialog = cast(
+            Adw.Dialog, builder.get_object("progress-dialog")
+        )
+
         self.prg_dialog.present(win)
         self._run_tartex_process(file_obj, app, win)
 

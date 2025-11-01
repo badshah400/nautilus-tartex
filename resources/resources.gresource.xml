@@ -7,5 +7,6 @@
     <!-- icon path should follow hicolor icon theme dir hierarchy -->
     <file preprocess="xml-stripblanks">icons/scalable/actions/archive-symbolic.svg</file>
     <file compressed="true">ui/nautilus-tartex.ui</file>
+    <file compressed="true">ui/nautilus-tartex-progress.ui</file>
   </gresource>
 </gresources>
