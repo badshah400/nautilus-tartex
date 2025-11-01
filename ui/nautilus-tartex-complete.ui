@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<interface>
+  <requires lib="gtk" version="4.18"/>
+  <requires lib="libadwaita" version="1.7"/>
+  <object class="AdwDialog" id="complete-dialog">
+    <property name="can-close">true</property>
+    <property name="hexpand">true</property>
+    <property name="presentation-mode">bottom-sheet</property>
+    <child>
+      <object class="GtkBox" id="status-box">
+        <property name="halign">fill</property>
+        <property name="hexpand">true</property>
+        <property name="orientation">horizontal</property>
+        <property name="spacing">8</property>
+        <property name="vexpand">true</property>
+        <property name="margin-top">12</property>
+        <property name="margin-bottom">12</property>
+        <property name="margin-start">12</property>
+        <property name="margin-end">12</property>
+        <child>
+          <object class="GtkImage" id="status-icon">
+            <property name="icon-name">test-pass-symbolic</property>
+            <property name="icon-size">large</property>
+            <property name="visible">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="status-label">
+            <property name="halign">center</property>
+            <property name="margin-start">6</property>
+            <property name="margin-end">12</property>
+            <property name="label" translatable="yes">Successful</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
+

@@ -340,6 +340,18 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     success_msg.split()[1],
                 ]
             )
+            builder: Gtk.Builder = Gtk.Builder.new_from_resource(
+                "/org/gnome/nautilus/ui/nautilus-tartex-complete.ui"
+            )
+            self.prg_dialog = cast(
+                Adw.Dialog, builder.get_object("complete-dialog")
+            )
+            label: Gtk.Label = cast(
+                Gtk.Label, builder.get_object("status-label")
+            )
+            label.set_markup(success_msg.rstrip("."))
+            self.prg_dialog.present(win)
+            # GLib.timeout_add_seconds(3, self.prg_dialog.force_close)
             self._notify_target = output_file.get_uri()
             GLib.timeout_add(
                 0, self._notify_send, app, "TarTeX Success", success_msg
