@@ -26,7 +26,6 @@ exposed via
 * `libadwaita-1.0`
 * `gtk-4.0`
 * `glib-2.0`
-* `libnotify >= 0.7.0`
 * `pango`
 * [`nautilus-python`](https://gitlab.gnome.org/GNOME/nautilus-python)
 
