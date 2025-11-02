@@ -327,19 +327,19 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                     success_msg.split()[1],
                 ]
             )
-            builder: Gtk.Builder = Gtk.Builder.new_from_resource(
-                "/org/gnome/nautilus/ui/nautilus-tartex-complete.ui"
+
+            # Note: 1 s delay to sync pop-up status dialog with busy spinner
+            GLib.timeout_add_seconds(
+                1, self._on_success_dialog, win, output_file, success_msg
             )
-            self.prg_dialog = cast(
-                Adw.Dialog, builder.get_object("complete-dialog")
+
+            # Note: file must already be available when setting up launcher;
+            # add 1 s delay to avoid any race between output availability and
+            # launcher selecting it
+            GLib.timeout_add_seconds(
+                1, self._on_success_select_tarball, win, output_file
             )
-            label: Gtk.Label = cast(
-                Gtk.Label, builder.get_object("status-label")
-            )
-            # drop unicode icon at the start of msg (and full-stop at end)
-            label.set_markup(success_msg.rstrip(".")[1:])
-            GLib.timeout_add_seconds(1, self.prg_dialog.present, win)
-            # GLib.timeout_add_seconds(3, self.prg_dialog.force_close)
+
             self._notify_target = output_file.get_uri()
             GLib.timeout_add_seconds(
                 1, self._notify_send, app, "TarTeX Success", success_msg
@@ -348,14 +348,37 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 self._update_recent,
                 [file_obj.get_uri(), output_file.get_uri()],
             )
-            flaunch: Gtk.FileLauncher = Gtk.FileLauncher.new()
-            flaunch.set_file(output_file)
-            flaunch.open_containing_folder(
-                win,
-                None,
-                lambda fl, r, _: fl.open_containing_folder_finish(r),
-                None,
-            )
+
+    def _on_success_dialog(
+            self, win: Gtk.Window, tarf: Gio.File,  msg: str
+    ):
+        """Show pop-up dialog on success and select output tarball"""
+        builder: Gtk.Builder = Gtk.Builder.new_from_resource(
+            "/org/gnome/nautilus/ui/nautilus-tartex-complete.ui"
+        )
+        self.prg_dialog = cast(
+            Adw.Dialog, builder.get_object("complete-dialog")
+        )
+        label: Gtk.Label = cast(
+            Gtk.Label, builder.get_object("status-label")
+        )
+        # strip unicode icon at the start of msg (and full-stop at end)
+        label.set_markup(msg.rstrip(".")[1:])
+        self.prg_dialog.present(win)
+        return
+
+    def _on_success_select_tarball(
+            self, win: Gtk.Window, tar_file: Gio.File
+    ):
+        flaunch: Gtk.FileLauncher = Gtk.FileLauncher.new()
+        flaunch.set_file(tar_file)
+        flaunch.open_containing_folder(
+            win,
+            None,
+            lambda fl, r, _: fl.open_containing_folder_finish(r),
+            None,
+        )
+        return
 
     def _update_recent(self, files: list[str]):
         """
