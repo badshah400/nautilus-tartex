@@ -348,6 +348,14 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 self._update_recent,
                 [file_obj.get_uri(), output_file.get_uri()],
             )
+            flaunch: Gtk.FileLauncher = Gtk.FileLauncher.new()
+            flaunch.set_file(output_file)
+            flaunch.open_containing_folder(
+                win,
+                None,
+                lambda fl, r, _: fl.open_containing_folder_finish(r),
+                None,
+            )
 
     def _update_recent(self, files: list[str]):
         """
