@@ -107,8 +107,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             self, menu_item: Nautilus.MenuItem, file_obj: Nautilus.FileInfo
     ) -> None:
         """
-        Method is called when the user clicks the menu item. Sends a
-        notification and call the function to run tartex
+        Method is called when the user clicks the menu item. Shows a
+        busy spinner and call the function to run tartex
         """
         app: Optional[Gtk.Application] = cast(
             Gtk.Application, Gtk.Application.get_default()  # must be nautilus
@@ -139,14 +139,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         app.mark_busy()
 
-        try:
-            builder = Gtk.Builder.new_from_resource(
-                "/org/gnome/nautilus/ui/nautilus-tartex-progress.ui"
-            )
-        except Exception as e:
-            print(f"FATAL: Could not load UI file: {e}")
-            return
-
+        builder = Gtk.Builder.new_from_resource(
+            "/org/gnome/nautilus/ui/nautilus-tartex-progress.ui"
+        )
         self.prg_dialog: Adw.Dialog = cast(
             Adw.Dialog, builder.get_object("progress-dialog")
         )
@@ -386,13 +381,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             5: "tarball creation",
         }
 
-        try:
-            builder = Gtk.Builder.new_from_resource(
-                "/org/gnome/nautilus/ui/nautilus-tartex.ui"
-            )
-        except Exception as e:
-            print(f"FATAL: Could not load UI file: {e}")
-            return False
+        builder = Gtk.Builder.new_from_resource(
+            "/org/gnome/nautilus/ui/nautilus-tartex.ui"
+        )
 
         # Retrieve widgets by ID (matching the UI file IDs)
         dialog: Adw.Dialog = cast(
