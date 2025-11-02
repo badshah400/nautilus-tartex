@@ -139,9 +139,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         app.mark_busy()
 
-        builder = Gtk.Builder()
         try:
-            builder.add_from_resource(
+            builder = Gtk.Builder.new_from_resource(
                 "/org/gnome/nautilus/ui/nautilus-tartex-progress.ui"
             )
         except Exception as e:
@@ -387,9 +386,8 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             5: "tarball creation",
         }
 
-        builder = Gtk.Builder()
         try:
-            builder.add_from_resource(
+            builder = Gtk.Builder.new_from_resource(
                 "/org/gnome/nautilus/ui/nautilus-tartex.ui"
             )
         except Exception as e:
