@@ -142,12 +142,12 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         builder = Gtk.Builder.new_from_resource(
             "/org/gnome/nautilus/ui/nautilus-tartex-progress.ui"
         )
-        self.prg_dialog: Adw.Dialog = cast(
+        self.progress_dlg: Adw.Dialog = cast(
             Adw.Dialog, builder.get_object("progress-dialog")
         )
 
         win: Gtk.Window = app.get_active_window()  # type: ignore[assignment]
-        self.prg_dialog.present(win)
+        self.progress_dlg.present(win)
         self._run_tartex_process(file_obj, app, win)
 
     def setup_notify_action(self, app: Gtk.Application):
@@ -287,7 +287,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
 
         app, win, file_obj = params
         success, stdout, stderr = proc.communicate_utf8_finish(res)
-        GLib.timeout_add_seconds(1, self.prg_dialog.force_close)
+        GLib.timeout_add_seconds(1, self.progress_dlg.force_close)
         if app:
             app.unmark_busy()
         exit_code = proc.get_exit_status()
