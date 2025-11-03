@@ -356,7 +356,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         builder: Gtk.Builder = Gtk.Builder.new_from_resource(
             "/org/gnome/nautilus/ui/nautilus-tartex-complete.ui"
         )
-        self.prg_dialog = cast(
+        success_dlg = cast(
             Adw.Dialog, builder.get_object("complete-dialog")
         )
         label: Gtk.Label = cast(
@@ -364,7 +364,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         )
         # strip unicode icon at the start of msg (and full-stop at end)
         label.set_markup(msg.rstrip(".")[1:])
-        self.prg_dialog.present(win)
+        success_dlg.present(win)
         return
 
     def _on_success_sel_tarball(
