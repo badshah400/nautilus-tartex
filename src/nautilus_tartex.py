@@ -328,7 +328,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 ]
             )
 
-            # Note: 1 s delay to sync pop-up status dialog with busy spinner
+            # Note: 1 s delay to sync pop-up success dialog with busy spinner
             GLib.timeout_add_seconds(
                 1, self._on_success_dialog, win, output_file, success_msg
             )
@@ -337,7 +337,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
             # add 1 s delay to avoid any race between output availability and
             # launcher selecting it
             GLib.timeout_add_seconds(
-                1, self._on_success_select_tarball, win, output_file
+                1, self._on_success_sel_tarball, win, output_file
             )
 
             self._notify_target = output_file.get_uri()
@@ -367,7 +367,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         self.prg_dialog.present(win)
         return
 
-    def _on_success_select_tarball(
+    def _on_success_sel_tarball(
             self, win: Gtk.Window, tar_file: Gio.File
     ):
         flaunch: Gtk.FileLauncher = Gtk.FileLauncher.new()
