@@ -140,7 +140,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         app.mark_busy()
 
         builder = Gtk.Builder.new_from_resource(
-            "/org/gnome/nautilus/ui/nautilus-tartex-progress.ui"
+            "/org/gnome/nautilus/ui/nautilus-tartex-busy-spinner.ui"
         )
         self.progress_dlg: Adw.Dialog = cast(
             Adw.Dialog, builder.get_object("progress-dialog")
@@ -190,7 +190,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         n = Gio.Notification.new("TarTeX")
         n.set_title(head)
         n.set_body(msg)
-        n.set_priority(Gio.NotificationPriority.NORMAL)  # remove persistence
+        n.set_priority(Gio.NotificationPriority.NORMAL)  # no persistence
         app.send_notification(self.NOTIFICATION_ID, n)
         return False
 
@@ -352,9 +352,9 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
     def _on_success_dialog(
             self, win: Gtk.Window, tarf: Gio.File,  msg: str
     ):
-        """Show pop-up dialog on success and select output tarball"""
+        """Show pop-up dialog on success"""
         builder: Gtk.Builder = Gtk.Builder.new_from_resource(
-            "/org/gnome/nautilus/ui/nautilus-tartex-complete.ui"
+            "/org/gnome/nautilus/ui/nautilus-tartex-success-dlg.ui"
         )
         success_dlg = cast(
             Adw.Dialog, builder.get_object("complete-dialog")
@@ -413,7 +413,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         }
 
         builder = Gtk.Builder.new_from_resource(
-            "/org/gnome/nautilus/ui/nautilus-tartex.ui"
+            "/org/gnome/nautilus/ui/nautilus-tartex-error-dlg.ui"
         )
 
         # Retrieve widgets by ID (matching the UI file IDs)
