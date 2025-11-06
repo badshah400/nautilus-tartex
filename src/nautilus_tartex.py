@@ -67,7 +67,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         self._file_object: Union[Gio.File, None] = None
 
     def get_file_items(
-            self, items: list[Nautilus.FileInfo]
+        self, items: list[Nautilus.FileInfo]
     ) -> list[Nautilus.MenuItem]:
         """
         Called by Nautilus to get the list of menu items to display for the
@@ -104,14 +104,15 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         return []
 
     def on_tartex_activate(
-            self, menu_item: Nautilus.MenuItem, file_obj: Nautilus.FileInfo
+        self, menu_item: Nautilus.MenuItem, file_obj: Nautilus.FileInfo
     ) -> None:
         """
         Method is called when the user clicks the menu item. Shows a
         busy spinner and call the function to run tartex
         """
         app: Optional[Gtk.Application] = cast(
-            Gtk.Application, Gtk.Application.get_default()  # must be nautilus
+            Gtk.Application,
+            Gtk.Application.get_default(),  # must be nautilus
         )
         if not app:  # cannot do anything without `app`; bail out
             return
@@ -349,27 +350,19 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
                 [file_obj.get_uri(), output_file.get_uri()],
             )
 
-    def _on_success_dialog(
-            self, win: Gtk.Window, tarf: Gio.File,  msg: str
-    ):
+    def _on_success_dialog(self, win: Gtk.Window, tarf: Gio.File, msg: str):
         """Show pop-up dialog on success"""
         builder: Gtk.Builder = Gtk.Builder.new_from_resource(
             "/org/gnome/nautilus/ui/nautilus-tartex-success-dlg.ui"
         )
-        success_dlg = cast(
-            Adw.Dialog, builder.get_object("complete-dialog")
-        )
-        label: Gtk.Label = cast(
-            Gtk.Label, builder.get_object("status-label")
-        )
+        success_dlg = cast(Adw.Dialog, builder.get_object("complete-dialog"))
+        label: Gtk.Label = cast(Gtk.Label, builder.get_object("status-label"))
         # strip unicode icon at the start of msg (and full-stop at end)
         label.set_markup(msg.rstrip(".")[1:])
         success_dlg.present(win)
         return
 
-    def _on_success_sel_tarball(
-            self, win: Gtk.Window, tar_file: Gio.File
-    ):
+    def _on_success_sel_tarball(self, win: Gtk.Window, tar_file: Gio.File):
         flaunch: Gtk.FileLauncher = Gtk.FileLauncher.new()
         flaunch.set_file(tar_file)
         flaunch.open_containing_folder(
