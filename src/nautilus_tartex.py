@@ -359,6 +359,7 @@ class TartexNautilusExtension(GObject.GObject, Nautilus.MenuProvider):
         label: Gtk.Label = cast(Gtk.Label, builder.get_object("status-label"))
         # strip unicode icon at the start of msg (and full-stop at end)
         msg_words = msg.rstrip(".").split()[1:]
+        # tarball name is the first word, we highlight this in bold font
         label.set_markup(f"<b>{msg_words[0]}</b> {' '.join(msg_words[1:])}")
         success_dlg.present(win)
         return
