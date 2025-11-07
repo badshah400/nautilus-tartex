@@ -5,6 +5,12 @@
 ### Added
 
 - Select generated tar file in the active nautilus folder if tartex succeeds
+- Add accent colour to spinner in progress dialog
+- Use "success" css style for icon in success pop-up dialog
+
+### Fixed
+
+- Limit wrapped lines in success dialog on narrow displays to two at most
 
 ## 0.3.0 [2025-11-02]
 
