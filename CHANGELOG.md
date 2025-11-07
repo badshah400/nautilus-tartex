@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 [2025-11-08]
 
 ### Added
 
@@ -40,7 +40,7 @@
 - Add margins to prevent text flowing into, and beyond, scroll-bars
 - Allow working with nautilus version 4.0 or 4.1, whichever is available and loaded first
 - Use the nautilus window active at menu trigger, not the (potentially different) one that is active when compilation is done
-- When clicking on the the "Copy" button, copy output text shown in dialog box, not the full error log
+- When clicking on the "Copy" button, copy output text shown in dialog box, not the full error log
 - Ensure searching targets displayed output, not the entire error log
 - Check for Adw and Pango libraries when configuring for install
 
